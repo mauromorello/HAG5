@@ -1,4 +1,3 @@
-
 {
     "domain": "haghost5",
     "name": "HAGhost5 - 3D Printer Sensors",
@@ -6,6 +5,7 @@
     "documentation": "https://github.com/mauromorello/HAG5",
     "requirements": ["aiohttp"],
     "codeowners": ["@mauromorello"],
-    "config_flow": true
+    "config_flow": true,
+    "iot_class": "local_push",
+    "icons": ["icon.svg"]
 }
-
