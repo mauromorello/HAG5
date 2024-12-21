@@ -1,1 +1,29 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configure HAGhost5",
+                "description": "Enter the local IP address of your 3D printer to connect.",
+                "data": {
+                    "ip_address": "3D Printer IP Address"
+                }
+            }
+        },
+        "error": {
+            "invalid_ip": "The IP address provided is not valid."
+        },
+        "abort": {
+            "already_configured": "This device is already configured."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "HAGhost5 Options",
+                "description": "Configure additional options for your integration."
+            }
+        }
+    },
+    "title": "HAGhost5 - 3D Printer Sensors"
+}
 
