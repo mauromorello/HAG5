@@ -308,6 +308,11 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
     @property
     def icon(self):
         return "mdi:wifi"
+    
+    @property
+    def state(self):
+        """Return the current printer state."""
+        return self._state        
 
     @property
     def is_on(self):
