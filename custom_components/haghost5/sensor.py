@@ -135,11 +135,7 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
         """Return the current state."""
         return self._state        
 
-    async def process_message(self, message: str):
-        global LAST_WEBSOCKET_MESSAGE
-        LAST_WEBSOCKET_MESSAGE = datetime.now()  # Aggiorna il timestamp
-        self.async_write_ha_state()  # Notifica a Home Assistant lo stato aggiornato
-        
+    async def process_message(self, message: str):        
         if "T:" in message:  # Verifica che il messaggio contenga informazioni sulle temperature
             try:
                 parts = message.split()  # Suddivide il messaggio in parti
@@ -326,10 +322,11 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
         return "online" if self.is_on else "offline"
 
     async def process_message(self, message: str):
-        """Aggiorna il timestamp quando arriva un messaggio valido."""
-        self._last_message_time = datetime.now()  # Aggiorna l'ora dell'ultimo messaggio
-        self.async_write_ha_state()  # Notifica a Home Assistant lo stato aggiornato
-        _LOGGER.debug("Updated Printer Online Status timestamp: %s", self._last_message_time)
+        """Aggiorna il timestamp solo una volta per ciclo."""
+        if self._last_message_time is None or datetime.now() - self._last_message_time >= timedelta(seconds=1):
+            self._last_message_time = datetime.now()  # Aggiorna l'ora dell'ultimo messaggio
+            self.async_write_ha_state()  # Notifica a Home Assistant lo stato aggiornato
+            _LOGGER.debug("Updated Printer Online Status timestamp: %s", self._last_message_time)
 
 
 class PrinterStateSensor(HAGhost5BaseSensor):
