@@ -23,6 +23,18 @@ class HAGhost5Sensor(SensorEntity):
         self._attributes = {}
 
     @property
+    def device_info(self):
+        """Return information about the device."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 WebSocket Device",
+            "manufacturer": "HAGhost5",
+            "model": "WebSocket Listener",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
+
+    @property
     def name(self):
         """Return the name of the sensor."""
         return "HAGhost5 WebSocket Sensor"
