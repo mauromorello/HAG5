@@ -5,9 +5,13 @@ from aiohttp import ClientSession, WSMsgType
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.core import HomeAssistant
+from datetime import datetime, timedelta
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+# Variabile globale per tracciare l'ultimo messaggio ricevuto
+LAST_WEBSOCKET_MESSAGE = None
 
 async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entities):
     """Set up the HAGhost5 sensor platform."""
@@ -132,6 +136,9 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
         return self._state        
 
     async def process_message(self, message: str):
+        global LAST_WEBSOCKET_MESSAGE
+        LAST_WEBSOCKET_MESSAGE = datetime.now()  # Aggiorna il timestamp
+        
         if "T:" in message:  # Verifica che il messaggio contenga informazioni sulle temperature
             try:
                 parts = message.split()  # Suddivide il messaggio in parti
@@ -288,7 +295,6 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
 
     def __init__(self, ip_address: str):
         super().__init__(ip_address, "printer_online_status")
-        self._state = False  # Default offline
 
     @property
     def unique_id(self):
@@ -303,28 +309,18 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
         return "mdi:wifi"
 
     @property
+    def state(self):
+        """Return the current state."""
+        return "Online" if self._state else "Offline" 
+
+    @property
     def is_on(self):
         """Return True if the printer is online."""
-        return self._state
-
-    async def listen_to_websocket(self, sensors):
-        """Maintain a persistent connection to the WebSocket."""
-        ws_url = f"ws://{self._ip_address}:8081/"
-        while True:
-            try:
-                async with ClientSession() as session:
-                    async with session.ws_connect(ws_url) as ws:
-                        _LOGGER.info("Connected to WebSocket at: %s", ws_url)
-                        self._state = True  # Stampante online
-                        self.async_write_ha_state()
-                        async for msg in ws:
-                            # Puoi gestire i messaggi del WebSocket qui
-                            pass
-            except Exception as e:
-                _LOGGER.error("Error in WebSocket connection: %s", e)
-                self._state = False  # Stampante offline
-                self.async_write_ha_state()
-                await asyncio.sleep(5)  # Riconnetti dopo un'attesa
+        global LAST_WEBSOCKET_MESSAGE
+        if LAST_WEBSOCKET_MESSAGE:
+            # Controlla se l'ultimo messaggio è stato ricevuto entro 5 secondi
+            return datetime.now() - LAST_WEBSOCKET_MESSAGE < timedelta(seconds=5)
+        return False  # Nessun messaggio ricevuto, consideriamo offline
 
 class PrinterStateSensor(HAGhost5BaseSensor):
     """Sensor for the printer operational state."""
@@ -357,7 +353,7 @@ class PrinterStateSensor(HAGhost5BaseSensor):
         elif "M997 IDLE" in message:
             self._state = "IDLE"
         else:
-            self._state = message
+            self._state = "UNKNOWN"
         _LOGGER.debug("Updated Printer State: %s", self._state)
         self.async_write_ha_state()
 
