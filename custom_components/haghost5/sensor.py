@@ -47,7 +47,7 @@ class HAGhost5BaseSensor(SensorEntity):
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
 
     async def listen_to_websocket(self, sensors):
@@ -81,7 +81,7 @@ class PrintFileSensor(HAGhost5BaseSensor):
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
     @property
     def name(self):
@@ -106,7 +106,7 @@ class PrinterStateSensor(HAGhost5BaseSensor):
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
     @property
     def name(self):
@@ -131,7 +131,7 @@ class ElapsedTimeSensor(HAGhost5BaseSensor):
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
     @property
     def name(self):
@@ -156,7 +156,7 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
     @property
     def name(self):
@@ -188,7 +188,7 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
     @property
     def name(self):
@@ -220,7 +220,7 @@ class BedTemperatureRealSensor(HAGhost5BaseSensor):
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
     @property
     def name(self):
@@ -252,7 +252,7 @@ class
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
     @property
     def name(self):
@@ -283,7 +283,7 @@ class PrintPercentageSensor(HAGhost5BaseSensor):
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
     """Sensor for the print percentage."""
 
@@ -319,7 +319,7 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor):
             "manufacturer": "HAGhost5",
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
-            "entry_type": "service",
+            "entry_type": "device",
         }
         return "Printer Online"
 
