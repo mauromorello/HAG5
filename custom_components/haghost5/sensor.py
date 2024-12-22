@@ -123,11 +123,18 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
                 parts = message.split()
                 for part in parts:
                     if part.startswith("T:"):
-                        self._state = float(part.split(":")[1].split("/")[0])
-                        _LOGGER.debug("Updated Nozzle Temperature (Real): %s", self._state)
-                        self.async_write_ha_state()
+                        # Gestione sicura del parsing
+                        temperature_parts = part.split(":")[1].split("/")
+                        if len(temperature_parts) > 0:  # Verifica che ci siano abbastanza elementi
+                            self._state = float(temperature_parts[0])
+                            _LOGGER.debug("Updated Nozzle Temperature (Real): %s", self._state)
+                            self.async_write_ha_state()
+                        else:
+                            _LOGGER.warning("Unexpected temperature format in message: %s", message)
             except (IndexError, ValueError) as e:
-                _LOGGER.error("Error parsing nozzle real temperature: %s", e)
+                _LOGGER.error("Error parsing nozzle real temperature: %s | Message: %s", e, message)
+
+
 
 class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
     """Sensor for the nozzle temperature setpoint."""
@@ -157,8 +164,13 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
                 parts = message.split()
                 for part in parts:
                     if part.startswith("T:"):
-                        self._state = float(part.split(":")[1].split("/")[1])
-                        _LOGGER.debug("Updated Nozzle Temperature (Setpoint): %s", self._state)
-                        self.async_write_ha_state()
+                        # Gestione sicura del parsing
+                        temperature_parts = part.split(":")[1].split("/")
+                        if len(temperature_parts) == 2:
+                            self._state = float(temperature_parts[1])
+                            _LOGGER.debug("Updated Nozzle Temperature (Setpoint): %s", self._state)
+                            self.async_write_ha_state()
+                        else:
+                            _LOGGER.warning("Unexpected temperature format in message: %s", message)
             except (IndexError, ValueError) as e:
-                _LOGGER.error("Error parsing nozzle setpoint temperature: %s", e)
+                _LOGGER.error("Error parsing nozzle setpoint temperature: %s | Message: %s", e, message)
