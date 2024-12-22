@@ -1,10 +1,12 @@
 {
-    "name": "HAGhost5",
-    "description": "Integration for importing 3D printer sensors into Home Assistant via WebSocket.",
-    "domain": "haghost5",
-    "codeowners": ["@mauromorello"],
-    "documentation": "https://github.com/mauromorello/HAG5",
-    "requirements": [],
-    "version": "0.1.0",
-    "iot_class": "local_push"
+    "name": "HAGhost5 - 3D Printer Sensors",
+    "content_in_root": false,
+    "zip_release": false,
+    "filename": null,
+    "hide_default_branch": false,
+    "homeassistant": "2024.1",
+    "hacs": "1.6.0",
+    "domains": ["sensor"],
+    "country": null,
+    "persistent_directory": null
 }
