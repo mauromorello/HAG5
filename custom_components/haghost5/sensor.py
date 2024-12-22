@@ -10,10 +10,19 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entities):
     """Set up the HAGhost5 sensor platform."""
     ip_address = config_entry.data.get("ip_address")
-    nozzle_sensor = NozzleTemperatureSensor(ip_address)
-    bed_sensor = BedTemperatureSensor(ip_address)
-    async_add_entities([nozzle_sensor, bed_sensor], update_before_add=True)
-    hass.loop.create_task(nozzle_sensor.listen_to_websocket(bed_sensor))
+    sensors = [
+        PrintFileSensor(ip_address),
+        PrinterStateSensor(ip_address),
+        ElapsedTimeSensor(ip_address),
+        NozzleTemperatureRealSensor(ip_address),
+        NozzleTemperatureSetpointSensor(ip_address),
+        BedTemperatureRealSensor(ip_address),
+        BedTemperatureSetpointSensor(ip_address),
+        PrintPercentageSensor(ip_address),
+        PrinterOnlineStatusSensor(ip_address),
+    ]
+    async_add_entities(sensors, update_before_add=True)
+    hass.loop.create_task(sensors[0].listen_to_websocket(sensors))
 
 class HAGhost5BaseSensor(SensorEntity):
     """Base class for HAGhost5 sensors."""
@@ -30,7 +39,7 @@ class HAGhost5BaseSensor(SensorEntity):
         """Return the state attributes."""
         return self._attributes
 
-    async def listen_to_websocket(self, other_sensor):
+    async def listen_to_websocket(self, sensors):
         """Maintain a persistent connection to the WebSocket."""
         ws_url = f"ws://{self._ip_address}:8081/"
         self._is_listening = True
@@ -42,7 +51,8 @@ class HAGhost5BaseSensor(SensorEntity):
                         _LOGGER.info("Connected to WebSocket at: %s", ws_url)
                         async for msg in ws:
                             if msg.type == WSMsgType.TEXT:
-                                await self.process_message(msg.data, other_sensor)
+                                for sensor in sensors:
+                                    await sensor.process_message(msg.data)
                             elif msg.type == WSMsgType.ERROR:
                                 _LOGGER.error("WebSocket error: %s", msg)
                                 break
@@ -50,82 +60,185 @@ class HAGhost5BaseSensor(SensorEntity):
                 _LOGGER.error("Error in WebSocket connection: %s", e)
                 await asyncio.sleep(5)  # Wait before reconnecting
 
-    async def process_message(self, message: str, other_sensor):
-        """Process incoming WebSocket messages."""
-        _LOGGER.debug("Received data: %s", message)
-        try:
-            # Override in child classes to parse specific data
-            pass
-        except Exception as e:
-            _LOGGER.error("Error handling WebSocket message: %s", e)
-
-class NozzleTemperatureSensor(HAGhost5BaseSensor):
-    """Sensor for the nozzle temperature."""
+class PrintFileSensor(HAGhost5BaseSensor):
+    """Sensor for the file being printed."""
 
     @property
-    def name(self) -> str:
-        """Return the name of the sensor."""
-        return "Nozzle Temperature"
+    def name(self):
+        return "Print File"
 
     @property
-    def state(self):
-        """Return the current state."""
-        return self._state
+    def icon(self):
+        return "mdi:file-document"
+
+    async def process_message(self, message: str):
+        if "M994" in message:
+            self._state = message.split("M994 ")[1].strip()
+            self.async_write_ha_state()
+
+class PrinterStateSensor(HAGhost5BaseSensor):
+    """Sensor for the printer state."""
 
     @property
-    def unique_id(self) -> str:
-        """Return a unique ID for the sensor."""
-        return f"haghost5_nozzle_{self._ip_address.replace('.', '_')}"
+    def name(self):
+        return "Printer State"
 
     @property
-    def icon(self) -> str:
-        """Return the icon of the sensor."""
-        return "mdi:thermometer"
+    def icon(self):
+        return "mdi:printer-3d"
+
+    async def process_message(self, message: str):
+        if "M997" in message:
+            self._state = message.split("M997 ")[1].strip()
+            self.async_write_ha_state()
+
+class ElapsedTimeSensor(HAGhost5BaseSensor):
+    """Sensor for the elapsed printing time."""
 
     @property
-    def unit_of_measurement(self) -> str:
-        """Return the unit of measurement of this sensor."""
+    def name(self):
+        return "Elapsed Time"
+
+    @property
+    def icon(self):
+        return "mdi:timer"
+
+    async def process_message(self, message: str):
+        if "M992" in message:
+            self._state = message.split("M992 ")[1].strip()
+            self.async_write_ha_state()
+
+class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
+    """Sensor for the real nozzle temperature."""
+
+    @property
+    def name(self):
+        return "Nozzle Temperature (Real)"
+
+    @property
+    def unit_of_measurement(self):
         return "°C"
 
-    async def process_message(self, message: str, other_sensor):
-        """Process the message for nozzle temperature."""
-        try:
-            if "T:" in message:
-                parts = message.split()
-                for part in parts:
-                    if part.startswith("T:"):
-                        self._state = float(part.split(":")[1].split("/")[0])
-                        self.async_write_ha_state()
-                    elif part.startswith("B:") and isinstance(other_sensor, BedTemperatureSensor):
-                        other_sensor._state = float(part.split(":")[1].split("/")[0])
-                        other_sensor.async_write_ha_state()
-        except Exception as e:
-            _LOGGER.error("Error parsing message: %s", e)
-
-class BedTemperatureSensor(HAGhost5BaseSensor):
-    """Sensor for the bed temperature."""
-
     @property
-    def name(self) -> str:
-        """Return the name of the sensor."""
-        return "Bed Temperature"
-
-    @property
-    def state(self):
-        """Return the current state."""
-        return self._state
-
-    @property
-    def unique_id(self) -> str:
-        """Return a unique ID for the sensor."""
-        return f"haghost5_bed_{self._ip_address.replace('.', '_')}"
-
-    @property
-    def icon(self) -> str:
-        """Return the icon of the sensor."""
+    def icon(self):
         return "mdi:thermometer"
 
+    async def process_message(self, message: str):
+        if "T:" in message:
+            parts = message.split()
+            for part in parts:
+                if part.startswith("T:"):
+                    self._state = float(part.split(":")[1].split("/")[0])
+                    self.async_write_ha_state()
+
+class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
+    """Sensor for the nozzle temperature setpoint."""
+
     @property
-    def unit_of_measurement(self) -> str:
-        """Return the unit of measurement of this sensor."""
+    def name(self):
+        return "Nozzle Temperature (Setpoint)"
+
+    @property
+    def unit_of_measurement(self):
         return "°C"
+
+    @property
+    def icon(self):
+        return "mdi:thermometer"
+
+    async def process_message(self, message: str):
+        if "T:" in message:
+            parts = message.split()
+            for part in parts:
+                if part.startswith("T:"):
+                    self._state = float(part.split(":")[1].split("/")[1])
+                    self.async_write_ha_state()
+
+class BedTemperatureRealSensor(HAGhost5BaseSensor):
+    """Sensor for the real bed temperature."""
+
+    @property
+    def name(self):
+        return "Bed Temperature (Real)"
+
+    @property
+    def unit_of_measurement(self):
+        return "°C"
+
+    @property
+    def icon(self):
+        return "mdi:thermometer"
+
+    async def process_message(self, message: str):
+        if "B:" in message:
+            parts = message.split()
+            for part in parts:
+                if part.startswith("B:"):
+                    self._state = float(part.split(":")[1].split("/")[0])
+                    self.async_write_ha_state()
+
+class BedTemperatureSetpointSensor(HAGhost5BaseSensor):
+    """Sensor for the bed temperature setpoint."""
+
+    @property
+    def name(self):
+        return "Bed Temperature (Setpoint)"
+
+    @property
+    def unit_of_measurement(self):
+        return "°C"
+
+    @property
+    def icon(self):
+        return "mdi:thermometer"
+
+    async def process_message(self, message: str):
+        if "B:" in message:
+            parts = message.split()
+            for part in parts:
+                if part.startswith("B:"):
+                    self._state = float(part.split(":")[1].split("/")[1])
+                    self.async_write_ha_state()
+
+class PrintPercentageSensor(HAGhost5BaseSensor):
+    """Sensor for the print percentage."""
+
+    @property
+    def name(self):
+        return "Print Percentage"
+
+    @property
+    def unit_of_measurement(self):
+        return "%"
+
+    @property
+    def icon(self):
+        return "mdi:progress-check"
+
+    async def process_message(self, message: str):
+        if "M27" in message:
+            self._state = int(message.split("M27 ")[1].strip())
+            self.async_write_ha_state()
+
+class PrinterOnlineStatusSensor(HAGhost5BaseSensor):
+    """Sensor for the printer online status."""
+
+    @property
+    def name(self):
+        return "Printer Online"
+
+    @property
+    def icon(self):
+        return "mdi:wifi"
+
+    async def process_message(self, message: str):
+        self._state = "ONLINE"
+        self.async_write_ha_state()
+
+    async def listen_to_websocket(self, sensors):
+        """Maintain a persistent connection to the WebSocket."""
+        try:
+            await super().listen_to_websocket(sensors)
+        except Exception:
+            self._state = "OFFLINE"
+            self.async_write_ha_state()
