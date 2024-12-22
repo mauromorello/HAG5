@@ -102,6 +102,10 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
         super().__init__(ip_address, "nozzle_temperature_real")
 
     @property
+    def unique_id(self):
+        return f"{self._ip_address}_nozzle_temperature_real"
+    
+    @property
     def name(self):
         return "Nozzle Temperature (Real)"
 
@@ -131,6 +135,10 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
     def __init__(self, ip_address: str):
         super().__init__(ip_address, "nozzle_temperature_setpoint")
 
+    @property
+    def unique_id(self):
+        return f"{self._ip_address}_nozzle_temperature_setpoint"
+    
     @property
     def name(self):
         return "Nozzle Temperature (Setpoint)"
