@@ -48,26 +48,28 @@ class HAGhost5BaseSensor(SensorEntity):
             "sw_version": "1.0",
         }
 
-    async def listen_to_websocket(self, sensors):
-        """Maintain a persistent connection to the WebSocket."""
-        ws_url = f"ws://{self._ip_address}:8081/"
-        self._is_listening = True
-        _LOGGER.debug("Connecting to WebSocket at: %s", ws_url)
-        while self._is_listening:
-            try:
-                async with ClientSession() as session:
-                    async with session.ws_connect(ws_url) as ws:
-                        _LOGGER.info("Connected to WebSocket at: %s", ws_url)
-                        async for msg in ws:
-                            if msg.type == WSMsgType.TEXT:
-                                for sensor in sensors:
-                                    await sensor.process_message(msg.data)
-                            elif msg.type == WSMsgType.ERROR:
-                                _LOGGER.error("WebSocket error: %s", msg)
-                                break
-            except Exception as e:
-                _LOGGER.error("Error in WebSocket connection: %s", e)
-                await asyncio.sleep(5)  # Wait before reconnecting
+async def listen_to_websocket(self, sensors):
+    """Maintain a persistent connection to the WebSocket."""
+    ws_url = f"ws://{self._ip_address}:8081/"
+    self._is_listening = True
+    _LOGGER.debug("Connecting to WebSocket at: %s", ws_url)
+    while self._is_listening:
+        try:
+            async with ClientSession() as session:
+                async with session.ws_connect(ws_url) as ws:
+                    _LOGGER.info("Connected to WebSocket at: %s", ws_url)
+                    async for msg in ws:
+                        if msg.type == WSMsgType.TEXT:
+                            _LOGGER.debug("WebSocket message received: %s", msg.data)
+                            for sensor in sensors:
+                                await sensor.process_message(msg.data)
+                        elif msg.type == WSMsgType.ERROR:
+                            _LOGGER.error("WebSocket error: %s", msg)
+                            break
+        except Exception as e:
+            _LOGGER.error("Error in WebSocket connection: %s", e)
+            await asyncio.sleep(5)  # Wait before reconnecting
+
 
 class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
     """Sensor for the real nozzle temperature."""
@@ -89,11 +91,16 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
 
     async def process_message(self, message: str):
         if "T:" in message:
-            parts = message.split()
-            for part in parts:
-                if part.startswith("T:"):
-                    self._state = float(part.split(":")[1].split("/")[0])
-                    self.async_write_ha_state()
+            try:
+                parts = message.split()
+                for part in parts:
+                    if part.startswith("T:"):
+                        self._state = float(part.split(":")[1].split("/")[0])
+                        _LOGGER.debug("Updated Nozzle Temperature (Real): %s", self._state)
+                        self.async_write_ha_state()
+            except (IndexError, ValueError) as e:
+                _LOGGER.error("Error parsing nozzle real temperature: %s", e)
+
 
 class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
     """Sensor for the nozzle temperature setpoint."""
@@ -115,8 +122,12 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
 
     async def process_message(self, message: str):
         if "T:" in message:
-            parts = message.split()
-            for part in parts:
-                if part.startswith("T:"):
-                    self._state = float(part.split(":")[1].split("/")[1])
-                    self.async_write_ha_state()
+            try:
+                parts = message.split()
+                for part in parts:
+                    if part.startswith("T:"):
+                        self._state = float(part.split(":")[1].split("/")[1])
+                        _LOGGER.debug("Updated Nozzle Temperature (Setpoint): %s", self._state)
+                        self.async_write_ha_state()
+            except (IndexError, ValueError) as e:
+                _LOGGER.error("Error parsing nozzle setpoint temperature: %s", e)
