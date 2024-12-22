@@ -20,16 +20,22 @@ class HAGhost5Sensor(SensorEntity):
         _LOGGER.debug("Initializing WebSocket sensor with IP: %s", ip_address)
         self._ip_address = ip_address
         self._state = None
+        self._attributes = {}
 
     @property
     def name(self):
         """Return the name of the sensor."""
-        return "WebSocket Sensor"
+        return "HAGhost5 WebSocket Sensor"
 
     @property
     def state(self):
         """Return the current state."""
         return self._state
+
+    @property
+    def extra_state_attributes(self):
+        """Return the additional attributes of the sensor."""
+        return self._attributes
 
     async def async_update(self):
         """Fetch new state data for the sensor."""
@@ -40,7 +46,9 @@ class HAGhost5Sensor(SensorEntity):
                 async with session.ws_connect(ws_url) as ws:
                     msg = await ws.receive()
                     if msg.type == WSMsgType.TEXT:
+                        # Update the sensor state with the received message
                         self._state = msg.data
+                        self._attributes = {"last_message": msg.data}
                         _LOGGER.debug("Received data: %s", msg.data)
                     elif msg.type == WSMsgType.ERROR:
                         _LOGGER.error("WebSocket error: %s", msg)
