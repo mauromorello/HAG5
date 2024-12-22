@@ -169,22 +169,23 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
         return self._state 
 
     async def process_message(self, message: str):
-        if message.startswith("T:"):  # Assicurati che il messaggio inizi con "T:"
-            try:
-                # Trova il segmento che inizia con "T:"
-                parts = message.split()
-                for part in parts:
-                    if part.startswith("T:"):  # Verifica che sia il segmento giusto
-                        # Cerca il valore dopo il primo slash
-                        values = part.split(":")[1].split("/")
-                        if len(values) > 1:  # Assicurati che esista un valore dopo "/"
-                            self._state = float(values[1])  # Estrai il secondo valore
-                            _LOGGER.debug("Updated Nozzle Temperature (Setpoint): %s", self._state)
-                            self.async_write_ha_state()
-                            return  # Uscita dal loop dopo aver trovato il valore
-                _LOGGER.warning("No valid setpoint found in message: %s", message)
-            except (ValueError, IndexError) as e:
-                _LOGGER.error("Error parsing nozzle setpoint temperature: %s | Message: %s", e, message)
+        if not message.startswith("T:"):
+            return
+        
+        try:
+            parts = message.split()
+            for part in parts:
+                if part.startswith("T:"):
+                    # part potrebbe essere "T:200 /200"
+                    temp_values = part.split(':')[1].split('/')
+                    if len(temp_values) > 1:
+                        self._state = float(temp_values[1])
+                        _LOGGER.debug("Updated Nozzle Temperature (Setpoint): %s", self._state)
+                        self.async_write_ha_state()
+                        return
+            _LOGGER.warning("No valid setpoint found in message: %s", message)
+        except (ValueError, IndexError) as e:
+            _LOGGER.error("Error parsing nozzle setpoint temperature: %s | Message: %s", e, message)
 
 
 
