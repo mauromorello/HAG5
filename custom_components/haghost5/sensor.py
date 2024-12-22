@@ -36,7 +36,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
                             if msg.type == WSMsgType.TEXT:
                                 _LOGGER.debug("WebSocket message received: %s", msg.data)
                                 for sensor in sensors:
-                                    await sensor.process_message(msg.data)
+                                    # Controlla se il sensore ha il metodo `process_message`
+                                    if hasattr(sensor, "process_message"):
+                                        await sensor.process_message(msg.data)
                             elif msg.type == WSMsgType.ERROR:
                                 _LOGGER.error("WebSocket error: %s", msg)
                                 break
