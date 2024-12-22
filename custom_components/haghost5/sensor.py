@@ -169,19 +169,21 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
         return self._state 
 
     async def process_message(self, message: str):
-        if "T:" in message:  # Controlla se il messaggio contiene informazioni sul nozzle
+        if message.startswith("T:"):  # Assicurati che la stringa inizi con "T:"
             try:
-                parts = message.split()  # Divide il messaggio in parti basate su spazi
+                # Divide il messaggio in parti basate sugli spazi
+                parts = message.split()
                 for part in parts:
-                    if part.startswith("T:"):  # Cerca la sezione "T:"
+                    if part.startswith("T:"):  # Cerca solo la sezione che inizia con "T:"
                         temperature_parts = part.split(":")[1].split("/")
-                        if len(temperature_parts) == 2:  # Assicurati che ci siano esattamente due valori
-                            self._state = float(temperature_parts[1])  # Setpoint è il secondo valore
+                        if len(temperature_parts) == 2:  # Assicurati che ci siano due valori
+                            self._state = float(temperature_parts[1])  # Primo numero dopo il '/'
                             _LOGGER.debug("Updated Nozzle Temperature (Setpoint): %s", self._state)
                             self.async_write_ha_state()
                         else:
                             _LOGGER.warning("Unexpected temperature format for Nozzle Setpoint: %s", part)
             except (IndexError, ValueError) as e:
                 _LOGGER.error("Error parsing nozzle setpoint temperature: %s | Message: %s", e, message)
+
 
 
