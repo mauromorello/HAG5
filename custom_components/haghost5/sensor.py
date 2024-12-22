@@ -295,6 +295,7 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
 
     def __init__(self, ip_address: str):
         super().__init__(ip_address, "printer_online_status")
+        self._last_message_time = None  # Timestamp dell'ultimo messaggio ricevuto
 
     @property
     def unique_id(self):
@@ -309,18 +310,18 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
         return "mdi:wifi"
 
     @property
-    def state(self):
-        """Return the current state."""
-        return "Online" if self._state else "Offline" 
-
-    @property
     def is_on(self):
         """Return True if the printer is online."""
-        global LAST_WEBSOCKET_MESSAGE
-        if LAST_WEBSOCKET_MESSAGE:
-            # Controlla se l'ultimo messaggio è stato ricevuto entro 5 secondi
-            return datetime.now() - LAST_WEBSOCKET_MESSAGE < timedelta(seconds=5)
-        return False  # Nessun messaggio ricevuto, consideriamo offline
+        if self._last_message_time:
+            # Calcola la differenza tra l'ora attuale e l'ultimo messaggio
+            return datetime.now() - self._last_message_time < timedelta(seconds=5)
+        return False
+
+    async def process_message(self, message: str):
+        """Aggiorna il timestamp quando arriva un messaggio valido."""
+        self._last_message_time = datetime.now()  # Aggiorna l'ora dell'ultimo messaggio
+        _LOGGER.debug("Updated Printer Online Status timestamp: %s", self._last_message_time)
+        self.async_write_ha_state()
 
 class PrinterStateSensor(HAGhost5BaseSensor):
     """Sensor for the printer operational state."""
@@ -347,13 +348,19 @@ class PrinterStateSensor(HAGhost5BaseSensor):
         return self._state
 
     async def process_message(self, message: str):
-        # Logica per determinare lo stato della stampante dai messaggi
+        """Processa solo messaggi con prefisso Mxxx."""
+        if not message.startswith("M997"):
+            return  # Ignora messaggi che non iniziano con "M"
+
+        # Logica per determinare lo stato della stampante
         if "M997 PRINTING" in message:
             self._state = "PRINTING"
         elif "M997 IDLE" in message:
             self._state = "IDLE"
         else:
-            self._state = "UNKNOWN"
+            self._state = message  # Usa il messaggio completo come stato sconosciuto
+
         _LOGGER.debug("Updated Printer State: %s", self._state)
         self.async_write_ha_state()
+
 
