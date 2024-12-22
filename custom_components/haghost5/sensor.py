@@ -36,7 +36,12 @@ class HAGhost5Sensor(SensorEntity):
     def extra_state_attributes(self):
         """Return the additional attributes of the sensor."""
         return self._attributes
-
+        
+    @property
+    def unique_id(self):
+        """Return a unique ID for the sensor."""
+        return f"haghost5_{self._ip_address.replace('.', '_')}"
+    
     async def async_update(self):
         """Fetch new state data for the sensor."""
         ws_url = f"ws://{self._ip_address}:8081/"
