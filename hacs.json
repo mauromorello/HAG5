@@ -6,7 +6,7 @@
     "hide_default_branch": false,
     "homeassistant": "2024.1",
     "hacs": "1.6.0",
-    "domains": ["sensor"],
+    "domains": ["sensor", "binary_sensor"],
     "country": null,
     "persistent_directory": null
 }
