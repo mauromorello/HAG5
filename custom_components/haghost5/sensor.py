@@ -29,7 +29,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
     # Start the WebSocket listener as a background task
     hass.loop.create_task(listen_to_websocket())         
   
-
 class HAGhost5BaseSensor(SensorEntity):
     """Base class for HAGhost5 sensors."""
 
@@ -53,6 +52,7 @@ class HAGhost5BaseSensor(SensorEntity):
 
     @property
     def device_info(self):
+        """Return device information for Home Assistant."""
         return {
             "identifiers": {(DOMAIN, self._ip_address)},
             "name": "HAGhost5 3D Printer",
@@ -60,7 +60,6 @@ class HAGhost5BaseSensor(SensorEntity):
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
         }
-
 
     async def listen_to_websocket(self, sensors):
         """Maintain a persistent connection to the WebSocket."""
@@ -76,13 +75,22 @@ class HAGhost5BaseSensor(SensorEntity):
                             if msg.type == WSMsgType.TEXT:
                                 _LOGGER.debug("WebSocket message received: %s", msg.data)
                                 for sensor in sensors:
-                                    await sensor.process_message(msg.data)
+                                    if hasattr(sensor, "process_message"):
+                                        await sensor.process_message(msg.data)
                             elif msg.type == WSMsgType.ERROR:
                                 _LOGGER.error("WebSocket error: %s", msg)
                                 break
+                            elif msg.type == WSMsgType.CLOSED:
+                                _LOGGER.warning("WebSocket connection closed.")
+                                break
+            except asyncio.TimeoutError:
+                _LOGGER.error("WebSocket connection timeout")
             except Exception as e:
                 _LOGGER.error("Error in WebSocket connection: %s", e)
+            finally:
+                _LOGGER.info("Reconnecting to WebSocket in 5 seconds...")
                 await asyncio.sleep(5)  # Wait before reconnecting
+
 
 class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
     """Sensor for the real nozzle temperature."""
