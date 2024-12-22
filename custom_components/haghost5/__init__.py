@@ -12,14 +12,13 @@ async def async_setup(hass: HomeAssistant, config: dict):
     hass.data[DOMAIN] = {}
     return True
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+async def async_setup_entry(hass, config_entry):
     """Set up HAGhost5 from a config entry."""
-    _LOGGER.debug("Setting up HAGhost5 entry")
+    hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][config_entry.entry_id] = config_entry.data
 
-    # Load the sensor platform
-    _LOGGER.debug("Loading sensor platform for HAGhost5")
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
+    # Forward the setup to the sensor platform
+    await hass.config_entries.async_forward_entry_setups(config_entry, ["sensor"])
 
     return True
 
