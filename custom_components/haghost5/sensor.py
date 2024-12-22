@@ -53,8 +53,11 @@ class HAGhost5BaseSensor(SensorEntity):
     async def process_message(self, message: str, other_sensor):
         """Process incoming WebSocket messages."""
         _LOGGER.debug("Received data: %s", message)
-        # Override in child classes to parse specific data
-        pass
+        try:
+            # Override in child classes to parse specific data
+            pass
+        except Exception as e:
+            _LOGGER.error("Error handling WebSocket message: %s", e)
 
 class NozzleTemperatureSensor(HAGhost5BaseSensor):
     """Sensor for the nozzle temperature."""
