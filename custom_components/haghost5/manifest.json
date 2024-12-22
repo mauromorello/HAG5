@@ -8,7 +8,6 @@
     "codeowners": ["@mauromorello"],
     "config_flow": true,
     "iot_class": "local_push",
-    "supported_features": ["sensor","device"],
     "homeassistant": "2024.1.0",
     "icon": "custom_components/haghost5/icon.png",
     "logo": "custom_components/haghost5/logo.png"
