@@ -15,7 +15,31 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
         NozzleTemperatureSetpointSensor(ip_address),
     ]
     async_add_entities(sensors, update_before_add=True)
-    hass.loop.create_task(sensors[0].listen_to_websocket(sensors))
+
+    async def websocket_listener():
+        """Central WebSocket listener for all sensors."""
+        ws_url = f"ws://{ip_address}:8081/"
+        _LOGGER.debug("Connecting to WebSocket at: %s", ws_url)
+        while True:
+            try:
+                async with ClientSession() as session:
+                    async with session.ws_connect(ws_url) as ws:
+                        _LOGGER.info("Connected to WebSocket at: %s", ws_url)
+                        async for msg in ws:
+                            if msg.type == WSMsgType.TEXT:
+                                _LOGGER.debug("WebSocket message received: %s", msg.data)
+                                for sensor in sensors:
+                                    await sensor.process_message(msg.data)
+                            elif msg.type == WSMsgType.ERROR:
+                                _LOGGER.error("WebSocket error: %s", msg)
+                                break
+            except Exception as e:
+                _LOGGER.error("Error in WebSocket connection: %s", e)
+                await asyncio.sleep(5)  # Wait before reconnecting
+    
+    # Start the WebSocket listener as a background task
+    hass.loop.create_task(websocket_listener())         
+  
 
 class HAGhost5BaseSensor(SensorEntity):
     """Base class for HAGhost5 sensors."""
@@ -47,6 +71,7 @@ class HAGhost5BaseSensor(SensorEntity):
             "model": "3D Printer Sensors",
             "sw_version": "1.0",
         }
+
 
     async def listen_to_websocket(self, sensors):
         """Maintain a persistent connection to the WebSocket."""
