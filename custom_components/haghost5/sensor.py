@@ -39,6 +39,17 @@ class HAGhost5BaseSensor(SensorEntity):
         """Return the state attributes."""
         return self._attributes
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
+
     async def listen_to_websocket(self, sensors):
         """Maintain a persistent connection to the WebSocket."""
         ws_url = f"ws://{self._ip_address}:8081/"
@@ -62,7 +73,16 @@ class HAGhost5BaseSensor(SensorEntity):
 
 class PrintFileSensor(HAGhost5BaseSensor):
     """Sensor for the file being printed."""
-
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
     @property
     def name(self):
         return "Print File"
@@ -78,7 +98,16 @@ class PrintFileSensor(HAGhost5BaseSensor):
 
 class PrinterStateSensor(HAGhost5BaseSensor):
     """Sensor for the printer state."""
-
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
     @property
     def name(self):
         return "Printer State"
@@ -94,7 +123,16 @@ class PrinterStateSensor(HAGhost5BaseSensor):
 
 class ElapsedTimeSensor(HAGhost5BaseSensor):
     """Sensor for the elapsed printing time."""
-
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
     @property
     def name(self):
         return "Elapsed Time"
@@ -110,7 +148,16 @@ class ElapsedTimeSensor(HAGhost5BaseSensor):
 
 class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
     """Sensor for the real nozzle temperature."""
-
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
     @property
     def name(self):
         return "Nozzle Temperature (Real)"
@@ -133,7 +180,16 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
 
 class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
     """Sensor for the nozzle temperature setpoint."""
-
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
     @property
     def name(self):
         return "Nozzle Temperature (Setpoint)"
@@ -156,7 +212,16 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
 
 class BedTemperatureRealSensor(HAGhost5BaseSensor):
     """Sensor for the real bed temperature."""
-
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
     @property
     def name(self):
         return "Bed Temperature (Real)"
@@ -177,9 +242,18 @@ class BedTemperatureRealSensor(HAGhost5BaseSensor):
                     self._state = float(part.split(":")[1].split("/")[0])
                     self.async_write_ha_state()
 
-class BedTemperatureSetpointSensor(HAGhost5BaseSensor):
+class 
     """Sensor for the bed temperature setpoint."""
-
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
     @property
     def name(self):
         return "Bed Temperature (Setpoint)"
@@ -201,6 +275,16 @@ class BedTemperatureSetpointSensor(HAGhost5BaseSensor):
                     self.async_write_ha_state()
 
 class PrintPercentageSensor(HAGhost5BaseSensor):
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
     """Sensor for the print percentage."""
 
     @property
@@ -225,6 +309,18 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor):
 
     @property
     def name(self):
+        return "Printer Online"
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": "HAGhost5 3D Printer",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer Sensors",
+            "sw_version": "1.0",
+            "entry_type": "service",
+        }
         return "Printer Online"
 
     @property
