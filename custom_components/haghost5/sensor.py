@@ -118,19 +118,18 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
         return "mdi:thermometer"
 
     async def process_message(self, message: str):
-        _LOGGER.debug("Processing message for Nozzle Temperature (Real): %s", message)
-        if "T:" in message:
+        if "T:" in message:  # Verifica che il messaggio contenga informazioni sulle temperature
             try:
-                parts = message.split()
+                parts = message.split()  # Suddivide il messaggio in parti
                 for part in parts:
-                    if part.startswith("T:"):
+                    if part.startswith("T:"):  # Cerca il prefisso "T:"
                         temperature_parts = part.split(":")[1].split("/")
-                        if len(temperature_parts) > 0:
+                        if len(temperature_parts) > 0:  # Verifica che ci sia almeno 1 valore
                             self._state = float(temperature_parts[0])
                             _LOGGER.debug("Updated Nozzle Temperature (Real): %s", self._state)
                             self.async_write_ha_state()
                         else:
-                            _LOGGER.warning("Unexpected format for Nozzle Temperature (Real): %s", message)
+                            _LOGGER.warning("Unexpected temperature format for Nozzle Real: %s", part)
             except (IndexError, ValueError) as e:
                 _LOGGER.error("Error parsing nozzle real temperature: %s | Message: %s", e, message)
 
@@ -160,18 +159,18 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
         return "mdi:thermometer"
 
     async def process_message(self, message: str):
-        if "T:" in message:
+        if "T:" in message:  # Verifica che il messaggio contenga informazioni sulle temperature
             try:
-                parts = message.split()
+                parts = message.split()  # Suddivide il messaggio in parti
                 for part in parts:
-                    if part.startswith("T:"):
-                        # Gestione sicura del parsing
+                    if part.startswith("T:"):  # Cerca il prefisso "T:"
                         temperature_parts = part.split(":")[1].split("/")
-                        if len(temperature_parts) == 2:
+                        if len(temperature_parts) == 2:  # Verifica che ci siano esattamente 2 valori
                             self._state = float(temperature_parts[1])
                             _LOGGER.debug("Updated Nozzle Temperature (Setpoint): %s", self._state)
                             self.async_write_ha_state()
                         else:
-                            _LOGGER.warning("Unexpected temperature format in message: %s", message)
+                            _LOGGER.warning("Unexpected temperature format for Nozzle Setpoint: %s", part)
             except (IndexError, ValueError) as e:
                 _LOGGER.error("Error parsing nozzle setpoint temperature: %s | Message: %s", e, message)
+
