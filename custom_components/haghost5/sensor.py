@@ -118,21 +118,22 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
         return "mdi:thermometer"
 
     async def process_message(self, message: str):
+        _LOGGER.debug("Processing message for Nozzle Temperature (Real): %s", message)
         if "T:" in message:
             try:
                 parts = message.split()
                 for part in parts:
                     if part.startswith("T:"):
-                        # Gestione sicura del parsing
                         temperature_parts = part.split(":")[1].split("/")
-                        if len(temperature_parts) > 0:  # Verifica che ci siano abbastanza elementi
+                        if len(temperature_parts) > 0:
                             self._state = float(temperature_parts[0])
                             _LOGGER.debug("Updated Nozzle Temperature (Real): %s", self._state)
                             self.async_write_ha_state()
                         else:
-                            _LOGGER.warning("Unexpected temperature format in message: %s", message)
+                            _LOGGER.warning("Unexpected format for Nozzle Temperature (Real): %s", message)
             except (IndexError, ValueError) as e:
                 _LOGGER.error("Error parsing nozzle real temperature: %s | Message: %s", e, message)
+
 
 
 
