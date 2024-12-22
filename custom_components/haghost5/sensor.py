@@ -25,53 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
         PrinterOnlineStatusSensor(ip_address),  # Binary Sensor
         PrinterStateSensor(ip_address),         # Stato Operativo
     ]
-    async_add_entities(sensors, update_before_add=True)
-
-    async def listen_to_websocket(self, sensors):
-        """Mantieni una connessione persistente al WebSocket."""
-        ws_url = f"ws://{self._ip_address}:8081/"
-        timeout = ClientTimeout(total=15)  # Timeout totale di 15 secondi per la connessione
-
-        while True:
-            try:
-                async with ClientSession(timeout=timeout) as session:
-                    async with session.ws_connect(ws_url) as ws:
-                        _LOGGER.info("Connected to WebSocket at: %s", ws_url)
-                        
-                        # Consideriamo la stampante online
-                        self._last_message_time = datetime.now()
-                        self.async_write_ha_state()
-                        
-                        # Gestiamo i messaggi ricevuti
-                        async for msg in ws:
-                            if msg.type == WSMsgType.TEXT:
-                                _LOGGER.debug("WebSocket message received: %s", msg.data)
-                                
-                                # Aggiorna il timestamp per ogni messaggio ricevuto
-                                self._last_message_time = datetime.now()
-                                self.async_write_ha_state()
-                                
-                                # Inoltra i messaggi ai sensori
-                                for sensor in sensors:
-                                    if hasattr(sensor, "process_message"):
-                                        await sensor.process_message(msg.data)
-                            elif msg.type == WSMsgType.ERROR:
-                                _LOGGER.error("WebSocket error received: %s", msg.data)
-                                break  # Termina il ciclo in caso di errore
-                            elif msg.type == WSMsgType.CLOSED:
-                                _LOGGER.warning("WebSocket connection closed")
-                                break
-            except asyncio.TimeoutError:
-                _LOGGER.error("WebSocket connection attempt timed out")
-            except Exception as e:
-                _LOGGER.error("Error in WebSocket connection: %s", e)
-
-            # Se siamo qui, qualcosa è andato storto: riconnessione
-            _LOGGER.info("Retrying connection in 5 seconds...")
-            self._last_message_time = None  # Stampante considerata offline
-            self.async_write_ha_state()
-            await asyncio.sleep(5)  # Attendi prima di ritentare
-    
+    async_add_entities(sensors, update_before_add=True)    
     # Start the WebSocket listener as a background task
     hass.loop.create_task(listen_to_websocket())         
   
