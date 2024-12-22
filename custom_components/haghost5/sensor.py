@@ -11,9 +11,12 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entities):
     """Set up the HAGhost5 sensor platform."""
     ip_address = config_entry.data.get("ip_address")
+
     sensors = [
         NozzleTemperatureRealSensor(ip_address),
         NozzleTemperatureSetpointSensor(ip_address),
+        BedTemperatureRealSensor(ip_address),
+        BedTemperatureSetpointSensor(ip_address),
     ]
     async_add_entities(sensors, update_before_add=True)
 
@@ -186,7 +189,94 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
         else:
             _LOGGER.warning("No valid temperature found in message: %s", message)
 
+class BedTemperatureRealSensor(HAGhost5BaseSensor):
+    """Sensor for the bed real temperature."""
 
+    def __init__(self, ip_address: str):
+        super().__init__(ip_address, "bed_temperature_real")
+
+    @property
+    def unique_id(self):
+        return f"{self._ip_address}_bed_temperature_real"
+    
+    @property
+    def name(self):
+        return "Bed Temperature (Real)"
+
+    @property
+    def unit_of_measurement(self):
+        return "°C"
+
+    @property
+    def icon(self):
+        return "mdi:thermometer"
+
+    @property
+    def state(self):
+        """Return the current state."""
+        return self._state 
+
+    async def process_message(self, message: str):
+        # Verifica che il messaggio contenga "B:"
+        if "B:" not in message:
+            return
+    
+        pattern = r"B:\s*([\d\.]+)\s*/"
+        match = re.search(pattern, message)
+        if match:
+            try:
+                self._state = float(match.group(1))  # La temperatura reale è il primo valore
+                _LOGGER.debug("Updated Bed Temperature (Real): %s", self._state)
+                self.async_write_ha_state()
+            except ValueError:
+                _LOGGER.error("Error parsing bed real temperature | Message: %s", message)
+        else:
+            _LOGGER.warning("No valid temperature found in message: %s", message)
+
+
+class BedTemperatureSetpointSensor(HAGhost5BaseSensor):
+    """Sensor for the bed temperature setpoint."""
+
+    def __init__(self, ip_address: str):
+        super().__init__(ip_address, "bed_temperature_setpoint")
+
+    @property
+    def unique_id(self):
+        return f"{self._ip_address}_bed_temperature_setpoint"
+    
+    @property
+    def name(self):
+        return "Bed Temperature (Setpoint)"
+
+    @property
+    def unit_of_measurement(self):
+        return "°C"
+
+    @property
+    def icon(self):
+        return "mdi:thermometer"
+
+    @property
+    def state(self):
+        """Return the current state."""
+        return self._state 
+
+    async def process_message(self, message: str):
+        # Verifica che il messaggio contenga "B:"
+        if "B:" not in message:
+            return
+    
+        pattern = r"B:\s*[\d\.]+\s*/\s*([\d\.]+)"
+        match = re.search(pattern, message)
+        if match:
+            try:
+                self._state = float(match.group(1))  # Il setpoint è il valore dopo lo slash
+                _LOGGER.debug("Updated Bed Temperature (Setpoint): %s", self._state)
+                self.async_write_ha_state()
+            except ValueError:
+                _LOGGER.error("Error parsing bed setpoint temperature | Message: %s", message)
+        else:
+            _LOGGER.warning("No valid temperature found in message: %s", message)
 
 
 
