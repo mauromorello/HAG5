@@ -354,8 +354,8 @@ class PrinterStateSensor(HAGhost5BaseSensor):
         return self._state
 
     async def process_message(self, message: str):
-        """Processa solo messaggi con prefisso Mxxx."""
-        if not message.startswith("M997"):
+        """Processa solo messaggi che iniziano con 'M'."""
+        if not message.startswith("M"):
             return  # Ignora messaggi che non iniziano con "M"
 
         # Logica per determinare lo stato della stampante
@@ -364,9 +364,11 @@ class PrinterStateSensor(HAGhost5BaseSensor):
         elif "M997 IDLE" in message:
             self._state = "IDLE"
         else:
-            self._state = message  # Usa il messaggio completo come stato sconosciuto
+            # Considera altri stati come messaggi "sconosciuti" ma comunque utili per debug
+            self._state = message
 
         _LOGGER.debug("Updated Printer State: %s", self._state)
         self.async_write_ha_state()
+
 
 
