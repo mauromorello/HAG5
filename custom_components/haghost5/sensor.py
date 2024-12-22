@@ -116,6 +116,11 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
     @property
     def icon(self):
         return "mdi:thermometer"
+    
+    @property
+    def state(self):
+        """Return the current state."""
+        return self._state        
 
     async def process_message(self, message: str):
         if "T:" in message:  # Verifica che il messaggio contenga informazioni sulle temperature
@@ -157,6 +162,11 @@ class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
     @property
     def icon(self):
         return "mdi:thermometer"
+
+    @property
+    def state(self):
+        """Return the current state."""
+        return self._state 
 
     async def process_message(self, message: str):
         if "T:" in message:  # Controlla se il messaggio contiene informazioni sul nozzle
