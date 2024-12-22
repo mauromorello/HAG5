@@ -1,5 +1,5 @@
 import logging
-from homeassistant.helpers.entity import Entity
+from homeassistant.components.sensor import SensorEntity
 from aiohttp import ClientSession, WSMsgType
 from .const import DOMAIN
 
@@ -10,9 +10,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     _LOGGER.debug("async_setup_entry called for HAGhost5")
     ip_address = config_entry.data.get("ip_address")
     _LOGGER.debug("IP address from config: %s", ip_address)
-    async_add_entities([WebSocketSensor(ip_address)], True)
+    async_add_entities([HAGhost5Sensor(ip_address)], True)
 
-class WebSocketSensor(Entity):
+class HAGhost5Sensor(SensorEntity):
     """Representation of a WebSocket sensor."""
 
     def __init__(self, ip_address):
