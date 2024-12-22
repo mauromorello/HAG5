@@ -49,7 +49,6 @@ class HAGhost5BaseSensor(SensorEntity):
         }
 
 async def listen_to_websocket(self, sensors):
-    """Maintain a persistent connection to the WebSocket."""
     ws_url = f"ws://{self._ip_address}:8081/"
     self._is_listening = True
     _LOGGER.debug("Connecting to WebSocket at: %s", ws_url)
@@ -89,17 +88,18 @@ class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
     def icon(self):
         return "mdi:thermometer"
 
-    async def process_message(self, message: str):
-        if "T:" in message:
-            try:
-                parts = message.split()
-                for part in parts:
-                    if part.startswith("T:"):
-                        self._state = float(part.split(":")[1].split("/")[0])
-                        _LOGGER.debug("Updated Nozzle Temperature (Real): %s", self._state)
-                        self.async_write_ha_state()
-            except (IndexError, ValueError) as e:
-                _LOGGER.error("Error parsing nozzle real temperature: %s", e)
+async def process_message(self, message: str):
+    if "T:" in message:
+        try:
+            parts = message.split()
+            for part in parts:
+                if part.startswith("T:"):
+                    self._state = float(part.split(":")[1].split("/")[0])
+                    _LOGGER.debug("Updated Nozzle Temperature (Real): %s", self._state)
+                    self.async_write_ha_state()
+        except (IndexError, ValueError) as e:
+            _LOGGER.error("Error parsing nozzle real temperature: %s", e)
+
 
 
 class NozzleTemperatureSetpointSensor(HAGhost5BaseSensor):
