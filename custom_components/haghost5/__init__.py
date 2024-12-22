@@ -19,9 +19,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     # Load the sensor platform
     _LOGGER.debug("Loading sensor platform for HAGhost5")
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
-    )
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
 
     return True
 
