@@ -6,6 +6,15 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import STATE_ON, STATE_OFF
 from datetime import datetime, timedelta
 from .const import DOMAIN
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorStateClass,       # Opzionale, se vuoi indicare il "tipo" di stato (measurement, total, ecc.)
+)
+from homeassistant.const import (
+    STATE_OFF,
+    STATE_ON,
+    PERCENTAGE,             # Per indicare il simbolo/label della percentuale
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -219,11 +228,41 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
 
     @property
     def name(self):
-        return "Progress"
+        return "Print Progress"
 
     @property
-    def state(self):
+    def device_class(self):
+        return None    
+
+    @property
+    def native_value(self):
+        """
+        Con il nuovo modello di sensori, si usa `native_value` al posto di `state`.
+        Se preferisci mantenere la vecchia nomenclatura, puoi fare `@property def state(self): ...`.
+        """
         return self._state
+
+    @property
+    def native_unit_of_measurement(self):
+        """Mostra la percentuale in HA."""
+        return PERCENTAGE    
+
+    @property
+    def icon(self):
+        """Icona personalizzata (mdi:printer-3d, ad esempio)."""
+        return "mdi:printer-3d"    
+
+    @property
+    def state_class(self):
+        """
+        Aggiunge maggiori info sulle funzionalità del sensore:
+        - SensorStateClass.MEASUREMENT (valore "istantaneo")
+        - SensorStateClass.TOTAL
+        - SensorStateClass.TOTAL_INCREASING
+        - ...
+        Qui, essendo una “misura” di avanzamento, potresti usare MEASUREMENT.
+        """
+        return SensorStateClass.MEASUREMENT    
 
     @property
     def device_info(self):
