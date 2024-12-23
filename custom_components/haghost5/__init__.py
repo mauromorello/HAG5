@@ -76,7 +76,7 @@ def copy_upload_page(hass: HomeAssistant):
     """
     src_file = hass.config.path("custom_components/haghost5/web/hag5_upload.html")
     dst_dir = hass.config.path("www")
-    dst_file = os.path.join(dst_dir, "hag5_upload.html")
+    dst_file = os.path.join(dst_dir, "community/haghost5/hag5_upload.html")
 
     try:
         os.makedirs(dst_dir, exist_ok=True)
