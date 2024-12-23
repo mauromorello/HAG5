@@ -9,6 +9,8 @@ from homeassistant.components.http import HomeAssistantView
 from aiohttp import web
 
 from .const import DOMAIN
+# (nuovo) Importiamo la nuova view dal file api.py
+from .api import GCodeUploadAndPrintView
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
     )
 
-    # 3) Registra la View per l'upload del file GCODE
+    # 3) Registra la View per l'upload semplice (/api/haghost5/upload_gcode)
     hass.http.register_view(GCodeUploadView())
 
     # 4) Copia la pagina HTML in config/www/community/haghost5/hag5_upload.html
@@ -54,6 +56,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if not os.path.exists(gcode_path):
         os.makedirs(gcode_path, exist_ok=True)
         _LOGGER.info("Created folder for GCODE files at: %s", gcode_path)
+
+    # (nuovo) 6) Registriamo anche la view "upload_and_print"
+    # Per ora, non passiamo sensor_ref (None). Se in futuro avrai
+    # un oggetto per inviare i comandi WS, lo passerai qui.
+    view_print = GCodeUploadAndPrintView(ip_address=ip_address, sensor_ref=None)
+    hass.http.register_view(view_print)
 
     return True
 
