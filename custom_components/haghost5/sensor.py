@@ -86,6 +86,17 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     def state(self):
         return self._state
 
+    @property
+    def device_info(self):
+        """Return device information for Home Assistant."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},  # Link entity to device
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }
+
     async def async_update(self):
         """Check if the printer is online and start WebSocket if needed."""
         _LOGGER.debug("Checking printer status...")
@@ -146,7 +157,17 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
     @property
     def state(self):
         return self._state
-  
+
+    @property
+    def device_info(self):
+        """Return device information for Home Assistant."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},  # Link entity to device
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }    
 
     async def process_message(self, message):
         """Process a WebSocket message and extract M997 status."""
@@ -181,6 +202,17 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
     @property
     def state(self):
         return self._state
+
+    @property
+    def device_info(self):
+        """Return device information for Home Assistant."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},  # Link entity to device
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }    
 
 
     async def process_message(self, message):
