@@ -31,13 +31,7 @@ async def async_setup_entry(hass, config_entry):
         hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
     )
 
-    # Mostra un alert per richiedere il riavvio
-    persistent_notification.async_create(
-        hass,
-        "L'integrazione è stata aggiornata. È necessario riavviare Home Assistant per applicare le modifiche.",
-        title="Riavvio necessario",
-        notification_id=f"{DOMAIN}_restart_required"
-    )
+
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
