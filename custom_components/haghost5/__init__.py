@@ -10,7 +10,9 @@ from aiohttp import web
 
 from .const import DOMAIN
 # (nuovo) Importiamo la nuova view dal file api.py
+
 from .api import GCodeUploadAndPrintView
+from .api import HAG5GetGcodeFile  # <--- Import della classe
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,6 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # un oggetto per inviare i comandi WS, lo passerai qui.
     view_print = GCodeUploadAndPrintView(ip_address=ip_address, sensor_ref=None)
     hass.http.register_view(view_print)
+    hass.http.register_view(HAG5GetGcodeFile())
 
     return True
 
