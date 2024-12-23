@@ -1,14 +1,14 @@
 {
-    "domain": "haghost5",
-    "name": "HAGhost5 Integration",
-    "version": "1.0.0",
-    "documentation": "https://github.com/mauromorello/HAG5",
-    "requirements": [],
-    "dependencies": [],
-    "codeowners": ["@mauromorello"],
-    "config_flow": true,
-    "iot_class": "local_push",
-    "homeassistant": "2024.1.0",
-    "icon": "custom_components/haghost5/icon.png",
-    "logo": "custom_components/haghost5/logo.png"
+  "domain": "haghost5",
+  "name": "HAGhost5 Integration",
+  "version": "1.0.0",
+  "documentation": "https://github.com/mauromorello/HAGhost5",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@tuo-username"],
+  "iot_class": "local_polling",
+  "config_flow": true,
+  "homeassistant": "2024.1.0",    
+  "icon": "custom_components/haghost5/icon.png",
+  "logo": "custom_components/haghost5/logo.png"  
 }
