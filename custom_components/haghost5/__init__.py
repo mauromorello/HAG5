@@ -100,7 +100,7 @@ class GCodeUploadView(HomeAssistantView):
 
     url = UPLOAD_URL
     name = "api:haghost5:upload_gcode"
-    requires_auth = True  # Richiede login su HA
+    requires_auth = False  # Richiede login su HA
 
     async def post(self, request):
         """Handle POST request for file upload."""
