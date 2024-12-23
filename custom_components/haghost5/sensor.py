@@ -8,10 +8,12 @@ from .const import DOMAIN
 
 from homeassistant.components.sensor import (
     SensorEntity,
+    SensorDeviceClass,
     SensorStateClass,       # Opzionale, se vuoi indicare il "tipo" di stato (measurement, total, ecc.)
 )
 from homeassistant.const import (
     UnitOfTime,
+    UnitOfTemperature,
     STATE_OFF,
     STATE_ON,
     PERCENTAGE,             # Per indicare il simbolo/label della percentuale
@@ -62,16 +64,20 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     m997_sensor = PrinterM997Sensor(ip_address)
     m27_sensor = PrinterM27Sensor(ip_address)
     m994_sensor = PrinterM994Sensor(ip_address)
+    tnozzle_sensor = TNozzleSensor(ip_address)
+    tbed_sensor = TBedSensor(ip_address)
     
     
     # Aggiungi i sensori a Home Assistant
-    async_add_entities([online_sensor, m997_sensor, m27_sensor, m994_sensor, m992_sensor])
+    async_add_entities([online_sensor, m997_sensor, m27_sensor, m994_sensor, m992_sensor, tbed_sensor, tnozzle_sensor])
 
     # Collega i sensori M997 e M27 al sensore online
     online_sensor.attach_m997_sensor(m997_sensor)
     online_sensor.attach_m27_sensor(m27_sensor)
     online_sensor.attach_m994_sensor(m994_sensor)
     online_sensor.attach_m992_sensor(m992_sensor)
+    online_sensor.attach_tbed_sensor(tbed_sensor)
+    online_sensor.attach_tnozzle_sensor(tnozzle_sensor)
 
     # Forza un aggiornamento immediato per ciascun sensore
     await online_sensor.async_update()
@@ -79,6 +85,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     await m27_sensor.async_update()
     await m994_sensor.async_update()
     await m992_sensor.async_update()
+    await tbed_sensor.async_update()
+    await tnozzle_sensor.async_update()
 
 class PrinterStatusSensor(HAGhost5BaseSensor):
     """Sensor to represent the printer's online/offline status."""
@@ -91,7 +99,9 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._m997_sensor = None
         self._m27_sensor = None
         self._m994_sensor = None
-        self._m992_sensor = None    
+        self._m992_sensor = None
+        self._tbed_sensor = None
+        self._tnozzle_sensor = None
 
     def attach_m997_sensor(self, m997_sensor):
         """Collega il sensore M997 al sensore online."""
@@ -108,6 +118,14 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     def attach_m992_sensor(self, m992_sensor):
         """Collega il sensore M992 al sensore online."""
         self._m992_sensor = m992_sensor
+
+    def attach_tbed_sensor(self, tbed_sensor):
+        """Collega il sensore tbed al sensore online."""
+        self._tbed_sensor = tbed_sensor
+
+    def attach_tbed_sensor(self, tnozzle_sensor):
+        """Collega il sensore tnozzle al sensore online."""
+        self._tnozzle_sensor = tnozzle_sensor    
         
     @property
     def name(self):
@@ -180,6 +198,10 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                                     await self._m994_sensor.process_message(msg.data)
                                 if self._m992_sensor:
                                     await self._m992_sensor.process_message(msg.data)
+                                if self._tbed_sensor:
+                                    await self._tbed_sensor.process_message(msg.data)
+                                if self._tnozzle_sensor:
+                                    await self._tnozzle_sensor.process_message(msg.data)
                                     
                             elif msg.type in {WSMsgType.CLOSED, WSMsgType.ERROR}:
                                 _LOGGER.warning("WebSocket closed or error.")
@@ -518,3 +540,157 @@ class PrinterM992Sensor(HAGhost5BaseSensor):
                     _LOGGER.warning("Sensor not yet added to HA. Skipping state update...")
         except Exception as e:
             _LOGGER.error("Error processing M992 message: %s", e)
+
+class TBedSensor(SensorEntity):
+    """Sensor for the bed temperature (extracts the value after B:)."""
+
+    def __init__(self, ip_address):
+        self._ip_address = ip_address
+        self._state = None
+        self._attributes = {}
+
+    @property
+    def name(self):
+        return "Bed Temperature"
+
+    @property
+    def device_class(self):
+        return SensorDeviceClass.TEMPERATURE
+
+    @property
+    def native_unit_of_measurement(self):
+        return UnitOfTemperature.CELSIUS
+
+    @property
+    def icon(self):
+        return "mdi:thermometer"
+
+    @property
+    def state_class(self):
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def native_value(self):
+        """Valore dello stato (temperatura)."""
+        return self._state
+
+    @property
+    def device_info(self):
+        """Raggruppa il sensore sotto il device della stampante."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }
+
+    @property
+    def unique_id(self):
+        """ID univoco per il sensore bed."""
+        return f"{self._ip_address}_bed_temp"
+
+    async def process_message(self, message):
+        """
+        Cerca la temperatura del bed subito dopo 'B:'.
+        Esempio di stringa: "T:199 /200 B:60 /60 T0:199 /200 T1:0 /0 @:0 B@:0"
+        """
+        try:
+            pattern = r"B:([\d\.]+)"
+            match = re.search(pattern, message)
+            if match:
+                bed_temp = float(match.group(1))
+                self._state = bed_temp
+                self._attributes = {
+                    "last_update": datetime.now().isoformat(),
+                    "raw_message": message,
+                }
+                _LOGGER.debug("Bed temperature updated: %s", bed_temp)
+
+                if self.hass is not None:
+                    self.async_write_ha_state()
+                else:
+                    _LOGGER.warning("Bed sensor not yet in HA. Skipping state update...")
+
+        except Exception as e:
+            _LOGGER.error("Error processing bed temperature message: %s", e)
+
+class TNozzleSensor(SensorEntity):
+    """Sensor for the nozzle temperature (extracts the value after T:)."""
+
+    def __init__(self, ip_address):
+        self._ip_address = ip_address
+        self._state = None
+        self._attributes = {}
+
+    @property
+    def name(self):
+        """Nome visualizzato in Home Assistant."""
+        return "Nozzle Temperature"
+
+    @property
+    def device_class(self):
+        """Tipo di sensore per HA (temperatura)."""
+        return SensorDeviceClass.TEMPERATURE
+
+    @property
+    def native_unit_of_measurement(self):
+        """Unità di misura (°C)."""
+        return UnitOfTemperature.CELSIUS
+
+    @property
+    def icon(self):
+        """Icona personalizzata."""
+        return "mdi:thermometer"
+
+    @property
+    def state_class(self):
+        """Misurazione istantanea (Measurement)."""
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def native_value(self):
+        """Valore dello stato (temperatura)."""
+        return self._state
+
+    @property
+    def device_info(self):
+        """Raggruppa il sensore sotto il device della stampante."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }
+
+    @property
+    def unique_id(self):
+        """ID univoco per il sensore nozzle."""
+        return f"{self._ip_address}_nozzle_temp"
+
+    async def process_message(self, message):
+        """
+        Cerca la temperatura nozzle subito dopo 'T:'.
+        Esempio di stringa: "T:199 /200 B:60 /60 T0:199 /200 T1:0 /0 @:0 B@:0"
+        """
+        try:
+            pattern = r"T:([\d\.]+)"
+            match = re.search(pattern, message)
+            if match:
+                nozzle_temp = float(match.group(1))
+                self._state = nozzle_temp
+                self._attributes = {
+                    "last_update": datetime.now().isoformat(),
+                    "raw_message": message,
+                }
+                _LOGGER.debug("Nozzle temperature updated: %s", nozzle_temp)
+
+                if self.hass is not None:
+                    self.async_write_ha_state()
+                else:
+                    _LOGGER.warning("Nozzle sensor not yet in HA. Skipping state update...")
+
+        except Exception as e:
+            _LOGGER.error("Error processing nozzle temperature message: %s", e)
+
