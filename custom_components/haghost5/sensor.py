@@ -521,7 +521,10 @@ class PrinterM992Sensor(SensorEntity):
                     "Printer M992 time updated: %s (%s seconds)",
                     time_string, self._state
                 )
-                self.async_write_ha_state()
+                if self.hass is not None:
+                    self.async_write_ha_state()
+                else:
+                    _LOGGER.warning("Sensor not yet added to HA. Skipping state update...")
             else:
                 _LOGGER.debug("No M992 time found in message: %s", message)
         except Exception as e:
