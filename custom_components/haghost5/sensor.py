@@ -1,4 +1,5 @@
 import logging
+import re
 import asyncio
 from aiohttp import ClientSession, WSMsgType
 from homeassistant.components.sensor import SensorEntity
