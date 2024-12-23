@@ -92,3 +92,54 @@ class GCodeUploadAndPrintView(HomeAssistantView):
         return web.Response(
             text=f"File {filename} uploaded to printer {self._ip_address} and print started!"
         )
+
+
+# api.py
+
+import logging
+import os
+from homeassistant.components.http import HomeAssistantView
+from aiohttp import web
+
+_LOGGER = logging.getLogger(__name__)
+
+class HAG5GetGcodeFile(HomeAssistantView):
+    """
+    Endpoint:
+      GET /api/haghost5/get_gcode_file?filename=<nome>.gcode
+
+    Legge il file .gcode da config/gcodes/<filename> e lo restituisce in plain text
+    """
+
+    url = "/api/haghost5/get_gcode_file"
+    name = "api:haghost5:get_gcode_file"
+    requires_auth = False  # o True se vuoi che sia accessibile solo a utenti loggati
+
+    async def get(self, request):
+        hass = request.app["hass"]
+
+        # 1) Recupera il parametro "filename" dalla query string
+        filename = request.query.get("filename")
+        if not filename:
+            return web.Response(text="Missing parameter ?filename=", status=400)
+
+        # 2) Costruisce il path nel filesystem
+        gcodes_dir = hass.config.path("gcodes")
+        file_path = os.path.join(gcodes_dir, filename)
+
+        # 3) Controlla che il file esista
+        if not os.path.isfile(file_path):
+            return web.Response(text=f"File '{filename}' not found.", status=404)
+
+        _LOGGER.debug("Serving GCODE file: %s", file_path)
+
+        # 4) Legge il file in modalità testo e lo ritorna
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                file_content = f.read()
+        except Exception as e:
+            _LOGGER.error("Error reading GCODE file '%s': %s", file_path, e)
+            return web.Response(text=f"Error reading file: {e}", status=500)
+
+        # 5) Risponde con il contenuto, come text/plain
+        return web.Response(text=file_content, content_type="text/plain")
