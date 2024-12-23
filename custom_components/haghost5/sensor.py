@@ -434,11 +434,11 @@ class PrinterM992Sensor(HAGhost5BaseSensor):
     @property
     def name(self):
         return "Elapsed Print Time"
-
+    """
     @property
     def device_class(self):
         return SensorDeviceClass.DURATION  # indica a HA che è un sensore di durata
-
+    """
     @property
     def native_value(self):
         """
