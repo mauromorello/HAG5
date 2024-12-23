@@ -69,7 +69,33 @@ class PrinterStatusSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         return {"last_message": self._last_message}
-
+        
+    @property
+    def device_info(self):
+        """Return device information for Home Assistant."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},  # Questo collega l'entità al device
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }
+        @property
+        
+    def is_on(self):
+        """Return True if the printer is online."""
+        if self._last_message_time:
+            online = datetime.now() - self._last_message_time < timedelta(seconds=5)
+            if online and not self._websocket_started:
+                self._websocket_started = True
+                self._start_websocket_callback()
+            return online
+        if not self._websocket_started:
+            # Se non è mai stato avviato, forziamo l'avvio una volta
+            self._websocket_started = True
+            self._start_websocket_callback()
+        return False    
+        
     async def async_update(self):
         """Check if the printer is online and start WebSocket if needed."""
         try:
