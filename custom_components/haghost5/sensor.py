@@ -237,8 +237,6 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
                 }
                 _LOGGER.debug("Printer M997 Status updated: %s", self._state)
                 self.async_write_ha_state()
-            else:
-                _LOGGER.debug("No M997 status found in message: %s", message)
         except Exception as e:
             _LOGGER.error("Error processing message: %s", e)
 
@@ -317,8 +315,6 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
                 }
                 _LOGGER.debug("Printer M27 Status updated: %s", self._state)
                 self.async_write_ha_state()  # Assicurati che venga chiamato
-            else:
-                _LOGGER.debug("No M27 status found in message: %s", message)
         except Exception as e:
             _LOGGER.error("Error processing message: %s", e)
 
@@ -423,8 +419,6 @@ class PrinterM994Sensor(HAGhost5BaseSensor):
                 }
                 _LOGGER.debug("Printer M994 filename updated: %s", self._state)
                 self.async_write_ha_state()
-            else:
-                _LOGGER.debug("No M994 filename found in message: %s", message)
         except Exception as e:
             _LOGGER.error("Error processing M994 message: %s", e)
 
