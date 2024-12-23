@@ -52,8 +52,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     m27_sensor = PrinterM27Sensor(ip_address)
 
     # Aggiungi i sensori a Home Assistant
-    async_add_entities([online_sensor, m997_sensor])
-    async_add_entities([online_sensor, m27_sensor])
+    async_add_entities([online_sensor, m997_sensor, m27_sensor])
+    #async_add_entities([online_sensor, m27_sensor])
 
     # Passa il riferimento del secondo sensore al WebSocket
     online_sensor.attach_m997_sensor(m997_sensor)
@@ -75,7 +75,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._m997_sensor = m997_sensor
         
     def attach_m997_sensor(self, m27_sensor):
-        """Collega il sensore M997 al sensore online."""
+        """Collega il sensore M27 al sensore online."""
         self._m27_sensor = m27_sensor
         
     @property
@@ -85,11 +85,6 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     @property
     def state(self):
         return self._state
-
-    @property
-    def unique_id(self):
-        """Return a unique ID for the sensor."""
-        return f"{self._ip_address}_{self.__class__.__name__.lower()}"
 
     async def async_update(self):
         """Check if the printer is online and start WebSocket if needed."""
