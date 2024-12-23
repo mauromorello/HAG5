@@ -3,18 +3,15 @@ import re
 import asyncio
 
 from aiohttp import ClientSession, WSMsgType
-from homeassistant.const import STATE_ON, STATE_OFF
 from datetime import datetime, timedelta
 from .const import DOMAIN
 
-from homeassistant.const import (
-    UnitOfTime,
-)
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,       # Opzionale, se vuoi indicare il "tipo" di stato (measurement, total, ecc.)
 )
 from homeassistant.const import (
+    UnitOfTime,
     STATE_OFF,
     STATE_ON,
     PERCENTAGE,             # Per indicare il simbolo/label della percentuale
@@ -441,7 +438,7 @@ class PrinterM992Sensor(HAGhost5BaseSensor):
 
     @property
     def name(self):
-        return "Elapsed Print Time (secs)"
+        return "Elapsed Print Time"
 
     @property
     def device_class(self):
