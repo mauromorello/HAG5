@@ -20,6 +20,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
 
     async def start_websocket_listener():
         """Start the WebSocket listener."""
+        _LOGGER.info("Starting WebSocket listener...")
         sensors = [
             NozzleTemperatureRealSensor(ip_address),
             NozzleTemperatureSetpointSensor(ip_address),
@@ -87,16 +88,27 @@ async def listen_to_websocket(ip_address, sensors):
                                 if hasattr(sensor, "process_message"):
                                     _LOGGER.debug("Processing message for sensor: %s", sensor.name)
                                     await sensor.process_message(msg.data)
-                        elif msg.type in {WSMsgType.ERROR, WSMsgType.CLOSED}:
-                            _LOGGER.error("WebSocket error or closed: %s", msg)
-                            break
+                        elif msg.type == WSMsgType.ERROR:
+                            _LOGGER.error("WebSocket error: %s", msg)
+                            break  # Esci per tentare la riconnessione
+                        elif msg.type == WSMsgType.CLOSED:
+                            _LOGGER.warning("WebSocket connection closed.")
+                            break  # Esci per tentare la riconnessione
         except asyncio.TimeoutError:
             _LOGGER.error("WebSocket connection timeout")
         except Exception as e:
             _LOGGER.error("Error in WebSocket connection: %s", e)
         finally:
             _LOGGER.info("Reconnecting to WebSocket in 5 seconds...")
-            await asyncio.sleep(5)
+            
+            # Reset dello stato del WebSocket per consentire una nuova connessione
+            for sensor in sensors:
+                if isinstance(sensor, PrinterOnlineStatusSensor):
+                    _LOGGER.debug("Resetting _websocket_started for sensor: %s", sensor.name)
+                    sensor._websocket_started = False
+            
+            await asyncio.sleep(5)  # Attendi prima di ritentare
+
 
 
 class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
@@ -296,28 +308,33 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
             if online and not self._websocket_started:
                 self._websocket_started = True
                 self._start_websocket_callback()
-            _LOGGER.debug("Printer Online Status: %s", "Online" if online else "Offline")
             return online
-        _LOGGER.debug("Printer Online Status: Offline (No messages)")
+        if not self._websocket_started:
+            # Se non è mai stato avviato, forziamo l'avvio una volta
+            self._websocket_started = True
+            self._start_websocket_callback()
         return False
+
 
     async def async_update(self):
         """Force update of the printer online status."""
         _LOGGER.debug("Forcing update of Printer Online Status.")
         try:
-            # Controlla se la stampante risponde con un ping o un tentativo HTTP
             async with ClientSession() as session:
                 async with session.get(f"http://{self._ip_address}:80", timeout=5) as response:
                     if response.status == 200:
                         self._last_message_time = datetime.now()
+                        if not self._websocket_started:
+                            self._websocket_started = True
+                            self._start_websocket_callback()
                         _LOGGER.debug("Printer responded to HTTP request, considered online.")
                     else:
                         _LOGGER.warning("Printer did not respond correctly to HTTP request.")
         except Exception as e:
             _LOGGER.error("Error during Printer Online Status check: %s", e)
+        finally:
+            self.async_write_ha_state()
 
-        # Aggiorna lo stato in Home Assistant
-        self.async_write_ha_state()
 
 
 
