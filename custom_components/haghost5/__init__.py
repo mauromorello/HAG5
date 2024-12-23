@@ -50,6 +50,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     # 4) Copia la pagina HTML in config/www/community/haghost5/hag5_upload.html
     copy_upload_page(hass)
+    copy_visual_page(hass)
 
     # 5) Crea (se non esiste) la cartella 'gcodes' dove verranno salvati i file
     gcode_path = hass.config.path(UPLOAD_DIR_NAME)
@@ -94,6 +95,29 @@ def copy_upload_page(hass: HomeAssistant):
         _LOGGER.info("Copied hag5_upload.html to %s", dst_file)
     except Exception as e:
         _LOGGER.error("Error copying hag5_upload.html: %s", e)
+
+def copy_visual_page(hass: HomeAssistant):
+    """
+    Copia il file 'hag5_visualizer.html' dalla cartella custom_components/haghost5/web/
+    in config/www/community/haghost5/hag5_visualizer.html, 
+    in modo che sia accessibile via /local/community/haghost5/hag5_visualizer.html
+    """
+    src_file = hass.config.path("custom_components/haghost5/web/hag5_visualizer.html")
+
+    # Creiamo la cartella /www/community/haghost5/ se non esiste
+    dst_dir = hass.config.path("www", "community", "haghost5")
+    os.makedirs(dst_dir, exist_ok=True)
+
+    dst_file = os.path.join(dst_dir, "hag5_visualizer.html")
+
+    path_gcodes = hass.config.path("gcodes")
+    os.makedirs(path_gcodes, exist_ok=True)
+
+    try:
+        shutil.copyfile(src_file, dst_file)
+        _LOGGER.info("Copied hag5_visualizer.html to %s", dst_file)
+    except Exception as e:
+        _LOGGER.error("Error copying hag5_visualizer.html: %s", e)
 
 
 class GCodeUploadView(HomeAssistantView):
