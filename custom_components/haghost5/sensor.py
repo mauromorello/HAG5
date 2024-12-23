@@ -1,11 +1,16 @@
 import logging
 import re
 import asyncio
+
 from aiohttp import ClientSession, WSMsgType
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import STATE_ON, STATE_OFF
 from datetime import datetime, timedelta
 from .const import DOMAIN
+from datetime import datetime
+from homeassistant.const import (
+    UnitOfTime,
+)
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,       # Opzionale, se vuoi indicare il "tipo" di stato (measurement, total, ecc.)
@@ -60,20 +65,23 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     m997_sensor = PrinterM997Sensor(ip_address)
     m27_sensor = PrinterM27Sensor(ip_address)
     m994_sensor = PrinterM994Sensor(ip_address)
-
+    m992_sensor = PrinterM992Sensor(ip_address)
+    
     # Aggiungi i sensori a Home Assistant
-    async_add_entities([online_sensor, m997_sensor, m27_sensor, m994_sensor])
+    async_add_entities([online_sensor, m997_sensor, m27_sensor, m994_sensor, m992_sensor])
 
     # Collega i sensori M997 e M27 al sensore online
     online_sensor.attach_m997_sensor(m997_sensor)
     online_sensor.attach_m27_sensor(m27_sensor)
     online_sensor.attach_m994_sensor(m994_sensor)
+    online_sensor.attach_m992_sensor(m992_sensor)
 
     # Forza un aggiornamento immediato per ciascun sensore
     await online_sensor.async_update()
     await m997_sensor.async_update()
     await m27_sensor.async_update()
     await m994_sensor.async_update()
+    await m992_sensor.async_update()
 
 class PrinterStatusSensor(HAGhost5BaseSensor):
     """Sensor to represent the printer's online/offline status."""
@@ -86,6 +94,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._m997_sensor = None
         self._m27_sensor = None
         self._m994_sensor = None
+        self._m992_sensor = None    
 
     def attach_m997_sensor(self, m997_sensor):
         """Collega il sensore M997 al sensore online."""
@@ -98,7 +107,11 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     def attach_m994_sensor(self, m994_sensor):
         """Collega il sensore M994 al sensore online."""
         self._m994_sensor = m994_sensor
-    
+        
+    def attach_m992_sensor(self, m992_sensor):
+        """Collega il sensore M992 al sensore online."""
+        self._m992_sensor = m992_sensor
+        
     @property
     def name(self):
         return "Status printer"
@@ -167,7 +180,10 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                                 if self._m27_sensor:
                                     await self._m27_sensor.process_message(msg.data)
                                 if self._m994_sensor:
-                                    await self._m994_sensor.process_message(msg.data)    
+                                    await self._m994_sensor.process_message(msg.data)
+                                if self._m992_sensor:
+                                    await self._m992_sensor.process_message(msg.data)
+                                    
                             elif msg.type in {WSMsgType.CLOSED, WSMsgType.ERROR}:
                                 _LOGGER.warning("WebSocket closed or error.")
                                 break
@@ -415,3 +431,98 @@ class PrinterM994Sensor(SensorEntity):
         except Exception as e:
             _LOGGER.error("Error processing M994 message: %s", e)
 
+
+class PrinterM992Sensor(SensorEntity):
+    """Sensor that captures the time elapsed (M992) converting HH:mm:ss to seconds."""
+
+    def __init__(self, ip_address):
+        self._ip_address = ip_address
+        self._state = None  # qui memorizzeremo i secondi (int)
+        self._attributes = {}
+
+    @property
+    def name(self):
+        return "Elapsed Print Time (secs)"
+
+    @property
+    def device_class(self):
+        return SensorDeviceClass.DURATION  # indica a HA che è un sensore di durata
+
+    @property
+    def native_value(self):
+        """
+        Restituiamo un int che rappresenta il tempo in secondi.
+        """
+        return self._state
+
+    @property
+    def native_unit_of_measurement(self):
+        """
+        Indica che stiamo fornendo il tempo in secondi.
+        """
+        return UnitOfTime.SECONDS  # "s" se preferisci la stringa classica
+
+    @property
+    def icon(self):
+        return "mdi:timer"
+
+    @property
+    def state_class(self):
+        """
+        Indica che si tratta di un valore di misura 'istantaneo'.
+        Potresti anche considerare 'total_increasing', 
+        ma di solito MEASUREMENT è sufficiente.
+        """
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def extra_state_attributes(self):
+        return self._attributes
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }
+
+    @property
+    def unique_id(self):
+        return f"{self._ip_address}_printer_m992_status"
+
+    async def process_message(self, message):
+        """
+        Esempio di messaggio: 
+           M992 00:46:49
+        """
+        try:
+            pattern = r"M992\s+(\d{2}:\d{2}:\d{2})"
+            match = re.search(pattern, message)
+            if match:
+                time_string = match.group(1)  # "00:46:49"
+
+                # Converti la stringa in un oggetto datetime (fittizio) 
+                # e poi calcola i secondi totali
+                t = datetime.strptime(time_string, "%H:%M:%S")
+                # Di default, la data sarà 1900-01-01; 
+                # usiamo total_seconds rispetto a mezzanotte:
+                seconds_elapsed = t.hour * 3600 + t.minute * 60 + t.second
+
+                self._state = seconds_elapsed
+                self._attributes = {
+                    "last_update": datetime.now().isoformat(),
+                    "raw_message": message,
+                    "formatted_time": time_string  # manteniamo l'HH:mm:ss negli attributi
+                }
+                _LOGGER.debug(
+                    "Printer M992 time updated: %s (%s seconds)",
+                    time_string, self._state
+                )
+                self.async_write_ha_state()
+            else:
+                _LOGGER.debug("No M992 time found in message: %s", message)
+        except Exception as e:
+            _LOGGER.error("Error processing M992 message: %s", e)
