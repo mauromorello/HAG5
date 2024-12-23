@@ -3,11 +3,9 @@ import re
 import asyncio
 
 from aiohttp import ClientSession, WSMsgType
-from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import STATE_ON, STATE_OFF
 from datetime import datetime, timedelta
 from .const import DOMAIN
-from datetime import datetime
 
 from homeassistant.const import (
     UnitOfTime,
@@ -327,7 +325,7 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
             _LOGGER.error("Error processing message: %s", e)
 
 
-class PrinterM994Sensor(SensorEntity):
+class PrinterM994Sensor(HAGhost5BaseSensor):
     """Sensor to capture the file name in print (from M994 messages)."""
 
     def __init__(self, ip_address):
@@ -433,7 +431,7 @@ class PrinterM994Sensor(SensorEntity):
             _LOGGER.error("Error processing M994 message: %s", e)
 
 
-class PrinterM992Sensor(SensorEntity):
+class PrinterM992Sensor(HAGhost5BaseSensor):
     """Sensor that captures the time elapsed (M992) converting HH:mm:ss to seconds."""
 
     def __init__(self, ip_address):
