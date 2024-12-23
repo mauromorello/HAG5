@@ -53,11 +53,11 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     # Aggiungi i sensori a Home Assistant
     async_add_entities([online_sensor, m997_sensor, m27_sensor])
-    #async_add_entities([online_sensor, m27_sensor])
 
-    # Passa il riferimento del secondo sensore al WebSocket
-    online_sensor.attach_sensors(m997_sensor, m27_sensor)
-    
+    # Collega i sensori M997 e M27 al sensore online
+    online_sensor.attach_m997_sensor(m997_sensor)
+    online_sensor.attach_m27_sensor(m27_sensor)
+
     # Forza un aggiornamento immediato per ciascun sensore
     await online_sensor.async_update()
     await m997_sensor.async_update()
