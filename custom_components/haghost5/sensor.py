@@ -430,8 +430,8 @@ class PrinterM994Sensor(HAGhost5BaseSensor):
 
                 # Se preferisci "ripulire" l'eventuale prefisso "1:/", puoi farlo qui.
                 # Esempio:
-                # if file_part.startswith("1:/"):
-                #     file_part = file_part[3:]
+                if file_part.startswith("1:/"):
+                    file_part = file_part[3:]
 
                 self._state = file_part  # Memorizziamo come stato il nome del file
                 self._attributes = {
