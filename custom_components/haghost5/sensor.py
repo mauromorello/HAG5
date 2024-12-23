@@ -17,17 +17,21 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
     """Set up the HAGhost5 sensor platform."""
     ip_address = config_entry.data.get("ip_address")
 
-    sensors = [
-        NozzleTemperatureRealSensor(ip_address),
-        NozzleTemperatureSetpointSensor(ip_address),
-        BedTemperatureRealSensor(ip_address),
-        BedTemperatureSetpointSensor(ip_address),
-        PrinterOnlineStatusSensor(ip_address),  # Binary Sensor
-        PrinterStateSensor(ip_address),         # Stato Operativo
-    ]
-    async_add_entities(sensors, update_before_add=True)    
-    # Start the WebSocket listener as a background task
-    hass.loop.create_task(listen_to_websocket())         
+    async def start_websocket_listener():
+        """Start the WebSocket listener."""
+        sensors = [
+            NozzleTemperatureRealSensor(ip_address),
+            NozzleTemperatureSetpointSensor(ip_address),
+            BedTemperatureRealSensor(ip_address),
+            BedTemperatureSetpointSensor(ip_address),
+            PrinterStateSensor(ip_address),
+        ]
+        async_add_entities(sensors, update_before_add=True)
+        hass.loop.create_task(listen_to_websocket(ip_address, sensors))
+
+    # Aggiungiamo il sensore online con il callback
+    online_sensor = PrinterOnlineStatusSensor(ip_address, start_websocket_listener)
+    async_add_entities([online_sensor], update_before_add=True)        
   
 class HAGhost5BaseSensor(SensorEntity):
     """Base class for HAGhost5 sensors."""
@@ -61,36 +65,32 @@ class HAGhost5BaseSensor(SensorEntity):
             "sw_version": "1.0",
         }
 
-    async def listen_to_websocket(self, sensors):
-        """Maintain a persistent connection to the WebSocket."""
-        ws_url = f"ws://{self._ip_address}:8081/"
-        self._is_listening = True
-        _LOGGER.debug("Connecting to WebSocket at: %s", ws_url)
-        while self._is_listening:
-            try:
-                async with ClientSession() as session:
-                    async with session.ws_connect(ws_url) as ws:
-                        _LOGGER.info("Connected to WebSocket at: %s", ws_url)
-                        async for msg in ws:
-                            if msg.type == WSMsgType.TEXT:
-                                _LOGGER.debug("WebSocket message received: %s", msg.data)
-                                for sensor in sensors:
-                                    if hasattr(sensor, "process_message"):
-                                        await sensor.process_message(msg.data)
-                            elif msg.type == WSMsgType.ERROR:
-                                _LOGGER.error("WebSocket error: %s", msg)
-                                break
-                            elif msg.type == WSMsgType.CLOSED:
-                                _LOGGER.warning("WebSocket connection closed.")
-                                break
-            except asyncio.TimeoutError:
-                _LOGGER.error("WebSocket connection timeout")
-            except Exception as e:
-                _LOGGER.error("Error in WebSocket connection: %s", e)
-            finally:
-                _LOGGER.info("Reconnecting to WebSocket in 5 seconds...")
-                await asyncio.sleep(5)  # Wait before reconnecting
 
+async def listen_to_websocket(ip_address, sensors):
+    """Mantieni una connessione persistente al WebSocket."""
+    ws_url = f"ws://{ip_address}:8081/"
+    _LOGGER.debug("Starting WebSocket listener for: %s", ws_url)
+    while True:
+        try:
+            async with ClientSession() as session:
+                async with session.ws_connect(ws_url) as ws:
+                    _LOGGER.info("Connected to WebSocket at: %s", ws_url)
+                    async for msg in ws:
+                        if msg.type == WSMsgType.TEXT:
+                            _LOGGER.debug("WebSocket message received: %s", msg.data)
+                            for sensor in sensors:
+                                if hasattr(sensor, "process_message"):
+                                    await sensor.process_message(msg.data)
+                        elif msg.type in {WSMsgType.ERROR, WSMsgType.CLOSED}:
+                            _LOGGER.error("WebSocket error or closed: %s", msg)
+                            break
+        except asyncio.TimeoutError:
+            _LOGGER.error("WebSocket connection timeout")
+        except Exception as e:
+            _LOGGER.error("Error in WebSocket connection: %s", e)
+        finally:
+            _LOGGER.info("Reconnecting to WebSocket in 5 seconds...")
+            await asyncio.sleep(5)  # Attendi prima di ritentare
 
 class NozzleTemperatureRealSensor(HAGhost5BaseSensor):
     """Sensor for the real nozzle temperature."""
@@ -271,12 +271,14 @@ class BedTemperatureSetpointSensor(HAGhost5BaseSensor):
         else:
             _LOGGER.warning("No valid temperature found in message: %s", message)
 
+
 class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
     """Binary sensor for the printer online status."""
 
-    def __init__(self, ip_address: str):
+    def __init__(self, ip_address: str, websocket_callback):
         super().__init__(ip_address, "printer_online_status")
-        self._last_message_time = None  # Timestamp dell'ultimo messaggio ricevuto
+        self._state = False  # Stato iniziale: offline
+        self.websocket_callback = websocket_callback  # Callback per avviare il WebSocket
 
     @property
     def unique_id(self):
@@ -293,24 +295,32 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
     @property
     def is_on(self):
         """Return True if the printer is online."""
-        if self._last_message_time:
-            online = datetime.now() - self._last_message_time < timedelta(seconds=5)
-            _LOGGER.debug("Printer Online Status: %s", "Online" if online else "Offline")
-            return online
-        _LOGGER.debug("Printer Online Status: Offline (No messages)")
-        return False
+        return self._state
 
     @property
     def state(self):
         """Return the current state as a string for clarity."""
         return "online" if self.is_on else "offline"
 
-    async def process_message(self, message: str):
-        """Aggiorna il timestamp solo una volta per ciclo."""
-        if self._last_message_time is None or datetime.now() - self._last_message_time >= timedelta(seconds=1):
-            self._last_message_time = datetime.now()  # Aggiorna l'ora dell'ultimo messaggio
-            self.async_write_ha_state()  # Notifica a Home Assistant lo stato aggiornato
-            _LOGGER.debug("Updated Printer Online Status timestamp: %s", self._last_message_time)
+    async def async_update(self):
+        """Check the printer's online status."""
+        try:
+            async with ClientSession() as session:
+                async with session.get(f"http://{self._ip_address}:80", timeout=5) as response:
+                    if response.status == 200:
+                        if not self._state:  # La stampante è appena diventata online
+                            self._state = True
+                            _LOGGER.debug("Printer is online (HTTP check successful).")
+                            await self.websocket_callback()  # Avvia il WebSocket
+                    else:
+                        self._state = False
+                        _LOGGER.warning("Printer responded but with a non-200 status code.")
+        except Exception as e:
+            self._state = False
+            _LOGGER.error("Error checking printer online status: %s", e)
+        self.async_write_ha_state()
+
+
 
 
 class PrinterStateSensor(HAGhost5BaseSensor):
