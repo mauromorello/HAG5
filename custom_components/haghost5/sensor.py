@@ -57,11 +57,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     ip_address = config_entry.data["ip_address"]
 
     # Crea i sensori
+    m992_sensor = PrinterM992Sensor(ip_address)
     online_sensor = PrinterStatusSensor(ip_address)
     m997_sensor = PrinterM997Sensor(ip_address)
     m27_sensor = PrinterM27Sensor(ip_address)
     m994_sensor = PrinterM994Sensor(ip_address)
-    m992_sensor = PrinterM992Sensor(ip_address)
+    
     
     # Aggiungi i sensori a Home Assistant
     async_add_entities([online_sensor, m997_sensor, m27_sensor, m994_sensor, m992_sensor])
