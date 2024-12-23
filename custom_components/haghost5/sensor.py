@@ -74,7 +74,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         """Collega il sensore M997 al sensore online."""
         self._m997_sensor = m997_sensor
         
-    def attach_m997_sensor(self, m27_sensor):
+    def attach_m27_sensor(self, m27_sensor):
         """Collega il sensore M27 al sensore online."""
         self._m27_sensor = m27_sensor
         
@@ -146,11 +146,7 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
     @property
     def state(self):
         return self._state
-
-    @property
-    def unique_id(self):
-        """Return a unique ID for the sensor."""
-        return f"{self._ip_address}_{self.__class__.__name__.lower()}"    
+  
 
     async def process_message(self, message):
         """Process a WebSocket message and extract M997 status."""
@@ -186,10 +182,6 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
     def state(self):
         return self._state
 
-    @property
-    def unique_id(self):
-        """Return a unique ID for the sensor."""
-        return f"{self._ip_address}_{self.__class__.__name__.lower()}"    
 
     async def process_message(self, message):
         """Process a WebSocket message and extract M27 status."""
