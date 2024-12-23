@@ -10,6 +10,40 @@ _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
+
+class HAGhost5BaseSensor(SensorEntity):
+    """Base class for HAGhost5 sensors."""
+
+    def __init__(self, ip_address: str, sensor_name: str):
+        """Initialize the sensor."""
+        self._ip_address = ip_address
+        self._state = None
+        self._attributes = {}
+        self._sensor_name = sensor_name  # Name identifier for unique_id
+        self._is_listening = False
+
+    @property
+    def unique_id(self):
+        """Return a unique ID for the sensor."""
+        return f"{self._ip_address}_{self._sensor_name}"
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        return self._attributes
+
+    @property
+    def device_info(self):
+        """Return device information for Home Assistant."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},  # Questo collega l'entità al device
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }
+
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the HAGhost5 sensor platform."""
     ip_address = config_entry.data["ip_address"]
