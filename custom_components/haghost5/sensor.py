@@ -12,6 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Variabile globale per tracciare l'ultimo messaggio ricevuto
 LAST_WEBSOCKET_MESSAGE = None
+SCAN_INTERVAL = timedelta(minutes=1)
 
 async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entities):
     """Set up the HAGhost5 sensor platform."""
@@ -275,10 +276,9 @@ class BedTemperatureSetpointSensor(HAGhost5BaseSensor):
 class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
     """Binary sensor for the printer online status."""
 
-    def __init__(self, ip_address: str, websocket_callback):
+    def __init__(self, ip_address: str):
         super().__init__(ip_address, "printer_online_status")
-        self._state = False  # Stato iniziale: offline
-        self.websocket_callback = websocket_callback  # Callback per avviare il WebSocket
+        self._last_message_time = None  # Timestamp dell'ultimo messaggio ricevuto
 
     @property
     def unique_id(self):
@@ -295,7 +295,12 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
     @property
     def is_on(self):
         """Return True if the printer is online."""
-        return self._state
+        if self._last_message_time:
+            online = datetime.now() - self._last_message_time < timedelta(seconds=5)
+            _LOGGER.debug("Printer Online Status: %s", "Online" if online else "Offline")
+            return online
+        _LOGGER.debug("Printer Online Status: Offline (No messages)")
+        return False
 
     @property
     def state(self):
@@ -303,24 +308,22 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
         return "online" if self.is_on else "offline"
 
     async def async_update(self):
-        """Check the printer's online status."""
+        """Force update of the printer online status."""
+        _LOGGER.debug("Forcing update of Printer Online Status.")
         try:
+            # Controlla se la stampante risponde con un ping o un tentativo HTTP
             async with ClientSession() as session:
                 async with session.get(f"http://{self._ip_address}:80", timeout=5) as response:
                     if response.status == 200:
-                        if not self._state:  # La stampante è appena diventata online
-                            self._state = True
-                            _LOGGER.debug("Printer is online (HTTP check successful).")
-                            await self.websocket_callback()  # Avvia il WebSocket
+                        self._last_message_time = datetime.now()
+                        _LOGGER.debug("Printer responded to HTTP request, considered online.")
                     else:
-                        self._state = False
-                        _LOGGER.warning("Printer responded but with a non-200 status code.")
+                        _LOGGER.warning("Printer did not respond correctly to HTTP request.")
         except Exception as e:
-            self._state = False
-            _LOGGER.error("Error checking printer online status: %s", e)
+            _LOGGER.error("Error during Printer Online Status check: %s", e)
+
+        # Aggiorna lo stato in Home Assistant
         self.async_write_ha_state()
-
-
 
 
 class PrinterStateSensor(HAGhost5BaseSensor):
