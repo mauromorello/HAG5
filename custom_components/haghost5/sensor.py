@@ -524,7 +524,5 @@ class PrinterM992Sensor(HAGhost5BaseSensor):
                     self.async_write_ha_state()
                 else:
                     _LOGGER.warning("Sensor not yet added to HA. Skipping state update...")
-            else:
-                _LOGGER.debug("No M992 time found in message: %s", message)
         except Exception as e:
             _LOGGER.error("Error processing M992 message: %s", e)
