@@ -59,18 +59,21 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     online_sensor = PrinterStatusSensor(ip_address)
     m997_sensor = PrinterM997Sensor(ip_address)
     m27_sensor = PrinterM27Sensor(ip_address)
+    m994_sensor = PrinterM994Sensor(ip_address)
 
     # Aggiungi i sensori a Home Assistant
-    async_add_entities([online_sensor, m997_sensor, m27_sensor])
+    async_add_entities([online_sensor, m997_sensor, m27_sensor, m994_sensor])
 
     # Collega i sensori M997 e M27 al sensore online
     online_sensor.attach_m997_sensor(m997_sensor)
     online_sensor.attach_m27_sensor(m27_sensor)
+    online_sensor.attach_m994_sensor(m994_sensor)
 
     # Forza un aggiornamento immediato per ciascun sensore
     await online_sensor.async_update()
     await m997_sensor.async_update()
     await m27_sensor.async_update()
+    await m994_sensor.async_update()
 
 class PrinterStatusSensor(HAGhost5BaseSensor):
     """Sensor to represent the printer's online/offline status."""
@@ -82,6 +85,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._websocket_started = False
         self._m997_sensor = None
         self._m27_sensor = None
+        self._m994_sensor = None
 
     def attach_m997_sensor(self, m997_sensor):
         """Collega il sensore M997 al sensore online."""
@@ -90,7 +94,11 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     def attach_m27_sensor(self, m27_sensor):
         """Collega il sensore M27 al sensore online."""
         self._m27_sensor = m27_sensor
-        
+
+    def attach_m994_sensor(self, m994_sensor):
+        """Collega il sensore M994 al sensore online."""
+        self._m994_sensor = m994_sensor
+    
     @property
     def name(self):
         return "Status printer"
@@ -158,6 +166,8 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                                     await self._m997_sensor.process_message(msg.data)
                                 if self._m27_sensor:
                                     await self._m27_sensor.process_message(msg.data)
+                                if self._m994_sensor:
+                                    await self._m994_sensor.process_message(msg.data)    
                             elif msg.type in {WSMsgType.CLOSED, WSMsgType.ERROR}:
                                 _LOGGER.warning("WebSocket closed or error.")
                                 break
@@ -298,3 +308,110 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
                 _LOGGER.debug("No M27 status found in message: %s", message)
         except Exception as e:
             _LOGGER.error("Error processing message: %s", e)
+
+
+class PrinterM994Sensor(SensorEntity):
+    """Sensor to capture the file name in print (from M994 messages)."""
+
+    def __init__(self, ip_address):
+        self._ip_address = ip_address
+        self._state = None
+        self._attributes = {}
+
+    @property
+    def name(self):
+        """Nome visualizzato nel frontend di Home Assistant."""
+        return "Printing File Name"
+
+    @property
+    def device_class(self):
+        """Se non c'è una device_class specifica, restituisci None."""
+        return None
+    
+    @property
+    def native_value(self):
+        """
+        Con il nuovo modello di sensori, si usa `native_value`.
+        Sarà il 'nome del file' in stampa.
+        """
+        return self._state
+
+    @property
+    def native_unit_of_measurement(self):
+        """
+        In questo caso non abbiamo un'unità di misura (es. °C, %, ecc.),
+        quindi restituiamo None.
+        """
+        return None
+
+    @property
+    def icon(self):
+        """
+        Icona personalizzata: potresti usare `mdi:file-code`, 
+        `mdi:file-document`, `mdi:file-document-box` o simili.
+        """
+        return "mdi:file-document"
+
+    @property
+    def state_class(self):
+        """
+        Non è un valore di tipo 'measurement' (non stiamo misurando un contatore),
+        quindi possiamo ritornare None.
+        """
+        return None
+
+    @property
+    def extra_state_attributes(self):
+        """Eventuali attributi extra da visualizzare in HA."""
+        return self._attributes
+
+    @property
+    def device_info(self):
+        """Return device information for Home Assistant."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }
+
+    @property
+    def unique_id(self):
+        """Return a truly unique ID for the sensor."""
+        return f"{self._ip_address}_printer_m994_status"
+
+    async def process_message(self, message):
+        """
+        Elabora un messaggio WebSocket che inizia con M994.
+        Esempio di messaggio: 
+           M994 1:/FBG5_stampo2.2.gcode;-788190462
+        """
+        try:
+            # Cerchiamo una stringa che inizi con "M994", seguita da uno spazio,
+            # poi un blocco (es. "1:/FBG5_stampo2.2.gcode") e un separatore ";",
+            # infine un valore numerico.
+            pattern = r"M994\s+([^;]+);([^\s]+)"
+            match = re.search(pattern, message)
+            if match:
+                file_part = match.group(1)   # "1:/FBG5_stampo2.2.gcode"
+                size_part = match.group(2)  # "-788190462" (o qualunque numero)
+
+                # Se preferisci "ripulire" l'eventuale prefisso "1:/", puoi farlo qui.
+                # Esempio:
+                # if file_part.startswith("1:/"):
+                #     file_part = file_part[3:]
+
+                self._state = file_part  # Memorizziamo come stato il nome del file
+                self._attributes = {
+                    "last_update": datetime.now().isoformat(),
+                    "raw_message": message,
+                    "possible_size": size_part,  # Sconosciuto, ma lo salviamo
+                }
+                _LOGGER.debug("Printer M994 filename updated: %s", self._state)
+                self.async_write_ha_state()
+            else:
+                _LOGGER.debug("No M994 filename found in message: %s", message)
+        except Exception as e:
+            _LOGGER.error("Error processing M994 message: %s", e)
+
