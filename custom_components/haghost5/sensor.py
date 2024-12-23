@@ -126,37 +126,37 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
             self._state = STATE_OFF
 
 
-async def _start_websocket(self):
-    """Start the WebSocket connection and process incoming messages."""
-    if self._websocket_started:
-        _LOGGER.warning("WebSocket is already started. Skipping...")
-        return  # Evita di riaprire il WebSocket se è già avviato
-
-    self._websocket_started = True
-    ws_url = f"ws://{self._ip_address}:8081/"
-    _LOGGER.info("Connecting to WebSocket at: %s", ws_url)
-
-    while self._state == STATE_ON:
-        try:
-            async with ClientSession() as session:
-                async with session.ws_connect(ws_url) as ws:
-                    async for msg in ws:
-                        if msg.type == WSMsgType.TEXT:
-                            _LOGGER.debug("WebSocket message received: %s", msg.data)
-
-                            # Pass the message to the M997 and M27 sensors for processing
-                            if self._m997_sensor:
-                                await self._m997_sensor.process_message(msg.data)
-                            if self._m27_sensor:
-                                await self._m27_sensor.process_message(msg.data)
-                        elif msg.type in {WSMsgType.CLOSED, WSMsgType.ERROR}:
-                            _LOGGER.warning("WebSocket closed or error.")
-                            break
-        except Exception as e:
-            _LOGGER.error("WebSocket error: %s", e)
-            await asyncio.sleep(5)  # Retry connection
-
-    self._websocket_started = False  # WebSocket chiuso, pronto per riaprirlo
+    async def _start_websocket(self):
+        """Start the WebSocket connection and process incoming messages."""
+        if self._websocket_started:
+            _LOGGER.warning("WebSocket is already started. Skipping...")
+            return  # Evita di riaprire il WebSocket se è già avviato
+    
+        self._websocket_started = True
+        ws_url = f"ws://{self._ip_address}:8081/"
+        _LOGGER.info("Connecting to WebSocket at: %s", ws_url)
+    
+        while self._state == STATE_ON:
+            try:
+                async with ClientSession() as session:
+                    async with session.ws_connect(ws_url) as ws:
+                        async for msg in ws:
+                            if msg.type == WSMsgType.TEXT:
+                                _LOGGER.debug("WebSocket message received: %s", msg.data)
+    
+                                # Pass the message to the M997 and M27 sensors for processing
+                                if self._m997_sensor:
+                                    await self._m997_sensor.process_message(msg.data)
+                                if self._m27_sensor:
+                                    await self._m27_sensor.process_message(msg.data)
+                            elif msg.type in {WSMsgType.CLOSED, WSMsgType.ERROR}:
+                                _LOGGER.warning("WebSocket closed or error.")
+                                break
+            except Exception as e:
+                _LOGGER.error("WebSocket error: %s", e)
+                await asyncio.sleep(5)  # Retry connection
+    
+        self._websocket_started = False  # WebSocket chiuso, pronto per riaprirlo
 
 
 
