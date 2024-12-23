@@ -488,7 +488,7 @@ class PrinterM992Sensor(HAGhost5BaseSensor):
 
     @property
     def unique_id(self):
-        return f"{self._ip_address}_printer_m992_status"
+        return f"{self._ip_address}_printer_elapsed_time"
 
     async def process_message(self, message):
         """
