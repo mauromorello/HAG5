@@ -194,7 +194,7 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
                 _LOGGER.debug("Printer M997 Status updated: %s", self._state)
                 self.async_write_ha_state()
             else:
-                #_LOGGER.debug("No M997 status found in message: %s", message)
+                _LOGGER.debug("No M997 status found in message: %s", message)
         except Exception as e:
             _LOGGER.error("Error processing message: %s", e)
 
