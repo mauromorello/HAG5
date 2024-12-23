@@ -14,15 +14,6 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 async def async_setup_entry(hass, config_entry):
     
-    # Registra il dispositivo
-    device_registry = dr.async_get(hass)
-    device_registry.async_get_or_create(
-        config_entry_id=config_entry.entry_id,
-        identifiers={(DOMAIN, config_entry.data["ip_address"])},
-        name=f"Printer ({config_entry.data['ip_address']})",
-        manufacturer="HAGhost5",
-        model="3D Printer"
-    )
     
     """Set up the integration from a config entry."""
     _LOGGER.debug("Setting up HAGhost5 integration for IP: %s", config_entry.data["ip_address"])
