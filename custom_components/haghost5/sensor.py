@@ -116,15 +116,15 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                         if self._state != STATE_ON:
                             _LOGGER.info("Printer is online. Starting WebSocket...")
                             self._state = STATE_ON
-                            self._websocket_started = True
                             asyncio.create_task(self._start_websocket())
                         return
         except Exception as e:
             _LOGGER.error("Error checking printer status: %s", e)
-
+    
         if self._state != STATE_OFF:
             _LOGGER.info("Printer is offline.")
             self._state = STATE_OFF
+
 
 async def _start_websocket(self):
     """Start the WebSocket connection and process incoming messages."""
@@ -254,8 +254,8 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
                     "raw_message": message,
                 }
                 _LOGGER.debug("Printer M27 Status updated: %s", self._state)
-                self.async_write_ha_state()
+                self.async_write_ha_state()  # Assicurati che venga chiamato
             else:
-                _LOGGER.debug("No M27 status found in message: %s", message)  # Indentazione corretta
+                _LOGGER.debug("No M27 status found in message: %s", message)
         except Exception as e:
             _LOGGER.error("Error processing message: %s", e)
