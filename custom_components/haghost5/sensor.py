@@ -123,7 +123,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         """Collega il sensore tbed al sensore online."""
         self._tbed_sensor = tbed_sensor
 
-    def attach_tbed_sensor(self, tnozzle_sensor):
+    def attach_tnozzle_sensor(self, tnozzle_sensor):
         """Collega il sensore tnozzle al sensore online."""
         self._tnozzle_sensor = tnozzle_sensor    
         
