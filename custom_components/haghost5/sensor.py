@@ -56,8 +56,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     #async_add_entities([online_sensor, m27_sensor])
 
     # Passa il riferimento del secondo sensore al WebSocket
-    online_sensor.attach_m997_sensor(m997_sensor)
-    online_sensor.attach_m27_sensor(m27_sensor)
+    online_sensor.attach_sensors(m997_sensor, m27_sensor)
 
 class PrinterStatusSensor(HAGhost5BaseSensor):
     """Sensor to represent the printer's online/offline status."""
