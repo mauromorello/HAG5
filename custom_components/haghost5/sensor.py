@@ -84,7 +84,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         
     @property
     def name(self):
-        return "Printer Online Status"
+        return "Status printer"
 
     @property
     def state(self):
@@ -169,7 +169,7 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
 
     @property
     def name(self):
-        return "Printer M997 Status"
+        return "Operation"
 
     @property
     def state(self):
@@ -219,7 +219,7 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
 
     @property
     def name(self):
-        return "Printer M27 Status"
+        return "Progress"
 
     @property
     def state(self):
