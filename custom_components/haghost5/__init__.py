@@ -78,6 +78,9 @@ def copy_upload_page(hass: HomeAssistant):
 
     dst_file = os.path.join(dst_dir, "hag5_upload.html")
 
+    path_gcodes = hass.config.path("gcodes")
+    os.makedirs(path_gcodes, exist_ok=True)
+
     try:
         shutil.copyfile(src_file, dst_file)
         _LOGGER.info("Copied hag5_upload.html to %s", dst_file)
