@@ -44,10 +44,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     )
 
     # 3) Registra la View per l'upload del file GCODE
-    #    (richiede che hass.http sia disponibile)
     hass.http.register_view(GCodeUploadView())
 
-    # 4) Copia la pagina HTML in config/www/hag5_upload.html
+    # 4) Copia la pagina HTML in config/www/community/haghost5/hag5_upload.html
     copy_upload_page(hass)
 
     # 5) Crea (se non esiste) la cartella 'gcodes' dove verranno salvati i file
@@ -61,10 +60,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload the integration."""
-    # Se tu avessi inizializzato hass.data[DOMAIN] in async_setup_entry,
-    # potresti fare un pop, tipo: hass.data[DOMAIN].pop(entry.entry_id, None)
-    # ma non sembra che tu lo stia facendo, quindi lascio così:
-
     await hass.config_entries.async_forward_entry_unload(entry, "sensor")
     return True
 
@@ -72,14 +67,18 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 def copy_upload_page(hass: HomeAssistant):
     """
     Copia il file 'hag5_upload.html' dalla cartella custom_components/haghost5/web/
-    in config/www/hag5_upload.html, in modo che sia accessibile via /local/hag5_upload.html.
+    in config/www/community/haghost5/hag5_upload.html, 
+    in modo che sia accessibile via /local/community/haghost5/hag5_upload.html.
     """
     src_file = hass.config.path("custom_components/haghost5/web/hag5_upload.html")
-    dst_dir = hass.config.path("www")
-    dst_file = os.path.join(dst_dir, "community/haghost5/hag5_upload.html")
+
+    # Creiamo la cartella /www/community/haghost5/ se non esiste
+    dst_dir = hass.config.path("www", "community", "haghost5")
+    os.makedirs(dst_dir, exist_ok=True)
+
+    dst_file = os.path.join(dst_dir, "hag5_upload.html")
 
     try:
-        os.makedirs(dst_dir, exist_ok=True)
         shutil.copyfile(src_file, dst_file)
         _LOGGER.info("Copied hag5_upload.html to %s", dst_file)
     except Exception as e:
