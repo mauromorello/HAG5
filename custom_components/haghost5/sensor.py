@@ -35,7 +35,7 @@ class HAGhost5BaseSensor(SensorEntity):
     def device_info(self):
         """Return device information for Home Assistant."""
         return {
-            "identifiers": {(DOMAIN, self._ip_address)},  # Link entity to device
+            "identifiers": {(DOMAIN, self._ip_address)},
             "name": f"Printer ({self._ip_address})",
             "manufacturer": "HAGhost5",
             "model": "3D Printer",
@@ -90,7 +90,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     def device_info(self):
         """Return device information for Home Assistant."""
         return {
-            "identifiers": {(DOMAIN, self._ip_address)},  # Link entity to device
+            "identifiers": {(DOMAIN, self._ip_address)},
             "name": f"Printer ({self._ip_address})",
             "manufacturer": "HAGhost5",
             "model": "3D Printer",
@@ -167,12 +167,12 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
     def device_info(self):
         """Return device information for Home Assistant."""
         return {
-            "identifiers": {(DOMAIN, self._ip_address)},  # Link entity to device
+            "identifiers": {(DOMAIN, self._ip_address)},
             "name": f"Printer ({self._ip_address})",
             "manufacturer": "HAGhost5",
             "model": "3D Printer",
             "sw_version": "1.0",
-        }    
+        }   
         
     @property
     def unique_id(self):
@@ -217,12 +217,12 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
     def device_info(self):
         """Return device information for Home Assistant."""
         return {
-            "identifiers": {(DOMAIN, self._ip_address)},  # Link entity to device
+            "identifiers": {(DOMAIN, self._ip_address)},
             "name": f"Printer ({self._ip_address})",
             "manufacturer": "HAGhost5",
             "model": "3D Printer",
             "sw_version": "1.0",
-        }    
+        }   
         
     @property
     def unique_id(self):
