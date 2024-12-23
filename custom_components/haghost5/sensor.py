@@ -49,13 +49,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     # Crea i sensori
     online_sensor = PrinterStatusSensor(ip_address)
     m997_sensor = PrinterM997Sensor(ip_address)
+    m27_sensor = PrinterM27Sensor(ip_address)
 
     # Aggiungi i sensori a Home Assistant
     async_add_entities([online_sensor, m997_sensor])
+    async_add_entities([online_sensor, m27_sensor])
 
     # Passa il riferimento del secondo sensore al WebSocket
     online_sensor.attach_m997_sensor(m997_sensor)
-
+    online_sensor.attach_m27_sensor(m27_sensor)
 
 class PrinterStatusSensor(HAGhost5BaseSensor):
     """Sensor to represent the printer's online/offline status."""
@@ -66,11 +68,16 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._last_message_time = None
         self._websocket_started = False
         self._m997_sensor = None
+        self._m27_sensor = None
 
     def attach_m997_sensor(self, m997_sensor):
         """Collega il sensore M997 al sensore online."""
         self._m997_sensor = m997_sensor
-
+        
+    def attach_m997_sensor(self, m27_sensor):
+        """Collega il sensore M997 al sensore online."""
+        self._m27_sensor = m27_sensor
+        
     @property
     def name(self):
         return "Printer Online Status"
@@ -78,6 +85,11 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     @property
     def state(self):
         return self._state
+
+    @property
+    def unique_id(self):
+        """Return a unique ID for the sensor."""
+        return f"{self._ip_address}_{self.__class__.__name__.lower()}"
 
     async def async_update(self):
         """Check if the printer is online and start WebSocket if needed."""
@@ -114,6 +126,8 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                                 # Pass the message to the M997 sensor for processing
                                 if self._m997_sensor:
                                     await self._m997_sensor.process_message(msg.data)
+                                if self._m27_sensor:
+                                    await self._m27_sensor.process_message(msg.data)    
 
                             elif msg.type in {WSMsgType.CLOSED, WSMsgType.ERROR}:
                                 _LOGGER.warning("WebSocket closed or error.")
@@ -138,6 +152,11 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
     def state(self):
         return self._state
 
+    @property
+    def unique_id(self):
+        """Return a unique ID for the sensor."""
+        return f"{self._ip_address}_{self.__class__.__name__.lower()}"    
+
     async def process_message(self, message):
         """Process a WebSocket message and extract M997 status."""
         try:
@@ -153,6 +172,45 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
                 _LOGGER.debug("Printer M997 Status updated: %s", self._state)
                 self.async_write_ha_state()
             else:
-                _LOGGER.debug("No M997 status found in message: %s", message)
+                #_LOGGER.debug("No M997 status found in message: %s", message)
+        except Exception as e:
+            _LOGGER.error("Error processing message: %s", e)
+
+class PrinterM27Sensor(HAGhost5BaseSensor):
+    """Sensor to represent the printer's status from M27 messages."""
+
+    def __init__(self, ip_address):
+        super().__init__(ip_address, "printer_m27_status")
+        self._state = None
+
+    @property
+    def name(self):
+        return "Printer M27 Status"
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def unique_id(self):
+        """Return a unique ID for the sensor."""
+        return f"{self._ip_address}_{self.__class__.__name__.lower()}"    
+
+    async def process_message(self, message):
+        """Process a WebSocket message and extract M27 status."""
+        try:
+            # Cerca un messaggio che inizia con "M27"
+            pattern = r"M27\s+([^\s]+)"
+            match = re.search(pattern, message)
+            if match:
+                self._state = match.group(1)  # Lo stato estratto dal messaggio
+                self._attributes = {
+                    "last_update": datetime.now().isoformat(),
+                    "raw_message": message,
+                }
+                _LOGGER.debug("Printer M27 Status updated: %s", self._state)
+                self.async_write_ha_state()
+            else:
+                #_LOGGER.debug("No M27 status found in message: %s", message)
         except Exception as e:
             _LOGGER.error("Error processing message: %s", e)
