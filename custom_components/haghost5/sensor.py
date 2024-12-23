@@ -32,7 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
 
     # Aggiungiamo il sensore online con il callback
     online_sensor = PrinterOnlineStatusSensor(ip_address, start_websocket_listener)
-    async_add_entities([online_sensor], update_before_add=True)        
+    async_add_entities([online_sensor], update_before_add=True)     
   
 class HAGhost5BaseSensor(SensorEntity):
     """Base class for HAGhost5 sensors."""
@@ -276,9 +276,10 @@ class BedTemperatureSetpointSensor(HAGhost5BaseSensor):
 class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
     """Binary sensor for the printer online status."""
 
-    def __init__(self, ip_address: str):
+    def __init__(self, ip_address: str, start_websocket_callback):
         super().__init__(ip_address, "printer_online_status")
         self._last_message_time = None  # Timestamp dell'ultimo messaggio ricevuto
+        self._start_websocket_callback = start_websocket_callback
 
     @property
     def unique_id(self):
@@ -297,6 +298,8 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
         """Return True if the printer is online."""
         if self._last_message_time:
             online = datetime.now() - self._last_message_time < timedelta(seconds=5)
+            if online and not self._is_listening:  # Avvia il WebSocket solo se non è già attivo
+                self._start_websocket_callback()
             _LOGGER.debug("Printer Online Status: %s", "Online" if online else "Offline")
             return online
         _LOGGER.debug("Printer Online Status: Offline (No messages)")
@@ -326,10 +329,12 @@ class PrinterOnlineStatusSensor(HAGhost5BaseSensor, BinarySensorEntity):
         self.async_write_ha_state()
 
 
+
 class PrinterStateSensor(HAGhost5BaseSensor):
     """Sensor for the printer operational state."""
 
     def __init__(self, ip_address: str):
+        _LOGGER.debug("PrinterOnlineStatusSensor initialized with IP: %s", ip_address)
         super().__init__(ip_address, "printer_state")
         self._state = "UNKNOWN"  # Stato iniziale
 
