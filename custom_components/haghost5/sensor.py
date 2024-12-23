@@ -97,6 +97,11 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
             "sw_version": "1.0",
         }
 
+    @property
+    def unique_id(self):
+        """Return a truly unique ID for the sensor."""
+        return f"{self._ip_address}_printer_online_status"
+
     async def async_update(self):
         """Check if the printer is online and start WebSocket if needed."""
         _LOGGER.debug("Checking printer status...")
@@ -168,7 +173,12 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
             "model": "3D Printer",
             "sw_version": "1.0",
         }    
-
+        
+    @property
+    def unique_id(self):
+        """Return a truly unique ID for the sensor."""
+        return f"{self._ip_address}_printer_m997_status"
+        
     async def process_message(self, message):
         """Process a WebSocket message and extract M997 status."""
         try:
@@ -213,8 +223,12 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
             "model": "3D Printer",
             "sw_version": "1.0",
         }    
-
-
+        
+    @property
+    def unique_id(self):
+        """Return a truly unique ID for the sensor."""
+        return f"{self._ip_address}_printer_m27_status"
+        
     async def process_message(self, message):
         """Process a WebSocket message and extract M27 status."""
         try:
@@ -230,6 +244,6 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
                 _LOGGER.debug("Printer M27 Status updated: %s", self._state)
                 self.async_write_ha_state()
             else:
-                #_LOGGER.debug("No M27 status found in message: %s", message)
+                _LOGGER.debug("No M27 status found in message: %s", message)  # Indentazione corretta
         except Exception as e:
             _LOGGER.error("Error processing message: %s", e)
