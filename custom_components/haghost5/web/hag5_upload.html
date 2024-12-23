@@ -67,34 +67,22 @@
     <h2>Carica File GCODE</h2>
 
     <!-- FORM -->
-    <form method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data">
-      <label for="file">Scegli il file GCODE</label>
-      <input
-        class="file-input"
-        type="file"
-        id="file"
-        name="file"
-        accept=".gcode"
-        required
-      />
+  <!-- Form per Upload Semplice -->
+  <form method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data">
+    <label>File GCODE (solo upload)</label>
+    <input type="file" name="file" accept=".gcode">
+    <button type="submit">Upload</button>
+  </form>
+  
+  <hr />
+  
+  <!-- Form per Upload + Print -->
+  <form method="POST" action="/api/haghost5/upload_and_print" enctype="multipart/form-data">
+    <label>File GCODE (upload + stampa)</label>
+    <input type="file" name="file" accept=".gcode">
+    <button type="submit">Upload & Print</button>
+  </form>
 
-      <!-- Pulsanti -->
-      <div class="btn-row">
-        <button type="submit" class="btn-upload">
-          &#x1F815; <!-- icona "upload" semplificata -->
-          Upload
-        </button>
-
-        <button
-          type="button"
-          class="btn-print"
-          onclick="alert('Funzione di upload + stampa da implementare!');"
-        >
-          &#9654; <!-- icona "play" semplificata -->
-          Upload &amp; Print
-        </button>
-      </div>
-    </form>
   </div>
 </body>
 </html>
