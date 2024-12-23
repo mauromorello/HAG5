@@ -41,24 +41,31 @@ class HAGhost5BaseSensor(SensorEntity):
             "sw_version": "1.0",
         }
 
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the HAGhost5 sensor platform."""
     ip_address = config_entry.data["ip_address"]
     sensor = PrinterStatusSensor(ip_address)
     async_add_entities([sensor])
 
-class PrinterStatusSensor(SensorEntity):
+
+class PrinterStatusSensor(HAGhost5BaseSensor):
     """Sensor to represent the printer's online/offline status."""
 
     def __init__(self, ip_address):
-        self._ip_address = ip_address
+        super().__init__(ip_address, "printer_online_status")
         self._state = STATE_OFF
         self._last_message = None
-        self._last_message_time = None  # Track the last message timestamp
+        self._last_message_time = None
 
     @property
     def name(self):
         return "Printer Online Status"
+
+    @property
+    def unique_id(self):
+        """Return a unique ID specific to this sensor."""
+        return f"{self._ip_address}_online_status"
 
     @property
     def state(self):
@@ -75,13 +82,13 @@ class PrinterStatusSensor(SensorEntity):
     def device_info(self):
         """Return device information for Home Assistant."""
         return {
-            "identifiers": {(DOMAIN, self._ip_address)},  # Link entity to device
+            "identifiers": {(DOMAIN, self._ip_address)},  # Unico identificativo del dispositivo
             "name": f"Printer ({self._ip_address})",
             "manufacturer": "HAGhost5",
             "model": "3D Printer",
             "sw_version": "1.0",
         }
-
+        
     async def async_update(self):
         """Check if the printer is online and start WebSocket if needed."""
         _LOGGER.debug("Checking printer status...")
@@ -97,8 +104,9 @@ class PrinterStatusSensor(SensorEntity):
         except Exception as e:
             _LOGGER.error("Error checking printer status: %s", e)
 
-        _LOGGER.info("Printer is offline.")
-        self._state = STATE_OFF
+        if self._state != STATE_OFF:
+            _LOGGER.info("Printer is offline.")
+            self._state = STATE_OFF
 
     async def _start_websocket(self):
         """Start the WebSocket connection and log all incoming messages."""
