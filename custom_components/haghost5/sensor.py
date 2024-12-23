@@ -108,22 +108,93 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
             _LOGGER.info("Printer is offline.")
             self._state = STATE_OFF
 
-    async def _start_websocket(self):
-        """Start the WebSocket connection and log all incoming messages."""
-        ws_url = f"ws://{self._ip_address}:8081/"
-        _LOGGER.info("Connecting to WebSocket at: %s", ws_url)
-        while self._state == STATE_ON:
-            try:
-                async with ClientSession() as session:
-                    async with session.ws_connect(ws_url) as ws:
-                        async for msg in ws:
-                            if msg.type == WSMsgType.TEXT:
-                                self._last_message = msg.data
-                                self._last_message_time = datetime.now().isoformat()
-                                _LOGGER.debug("WebSocket message: %s", msg.data)
-                            elif msg.type in {WSMsgType.CLOSED, WSMsgType.ERROR}:
-                                _LOGGER.warning("WebSocket closed or error.")
-                                break
-            except Exception as e:
-                _LOGGER.error("WebSocket error: %s", e)
-                await asyncio.sleep(5)  # Retry connection
+async def _start_websocket(self):
+    """Start the WebSocket connection and process incoming messages."""
+    ws_url = f"ws://{self._ip_address}:8081/"
+    _LOGGER.info("Connecting to WebSocket at: %s", ws_url)
+    while self._state == STATE_ON:
+        try:
+            async with ClientSession() as session:
+                async with session.ws_connect(ws_url) as ws:
+                    async for msg in ws:
+                        if msg.type == WSMsgType.TEXT:
+                            self._last_message = msg.data
+                            self._last_message_time = datetime.now().isoformat()
+                            _LOGGER.debug("WebSocket message: %s", msg.data)
+                            
+                            # Call the process_message method to parse the message
+                            try:
+                                await self.process_message(msg.data)
+                            except Exception as e:
+                                _LOGGER.error("Error while processing WebSocket message: %s", e)
+
+                        elif msg.type in {WSMsgType.CLOSED, WSMsgType.ERROR}:
+                            _LOGGER.warning("WebSocket closed or error.")
+                            break
+        except Exception as e:
+            _LOGGER.error("WebSocket error: %s", e)
+            await asyncio.sleep(5)  # Retry connection
+
+
+
+
+class PrinterStatusSensor(SensorEntity):
+    """Sensor to represent the printer's status from M997 messages."""
+
+    def __init__(self, ip_address):
+        """Initialize the sensor."""
+        self._ip_address = ip_address
+        self._state = None
+        self._attributes = {}
+        self._last_message = None
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return "Printer Status"
+
+    @property
+    def state(self):
+        """Return the current state."""
+        return self._state
+
+    @property
+    def extra_state_attributes(self):
+        """Return additional attributes of the sensor."""
+        return self._attributes
+
+    @property
+    def unique_id(self):
+        """Return a unique ID for the sensor."""
+        return f"{self._ip_address}_printer_status"
+
+    @property
+    def device_info(self):
+        """Return device information for Home Assistant."""
+        return {
+            "identifiers": {(DOMAIN, self._ip_address)},  # Unico identificativo del dispositivo
+            "name": f"Printer ({self._ip_address})",
+            "manufacturer": "HAGhost5",
+            "model": "3D Printer",
+            "sw_version": "1.0",
+        }    
+
+    async def process_message(self, message):
+        """Process a WebSocket message and extract M997 status."""
+        try:
+            # Cerca un messaggio che inizia con "M997"
+            pattern = r"M997\s+([^\s]+)"
+            match = re.search(pattern, message)
+            if match:
+                self._state = match.group(1)  # Lo stato estratto dal messaggio
+                self._last_message = message
+                self._attributes = {
+                    "last_update": datetime.now().isoformat(),
+                    "raw_message": message
+                }
+                _LOGGER.debug("Printer Status updated: %s", self._state)
+                self.async_write_ha_state()
+            else:
+                _LOGGER.debug("No M997 status found in message: %s", message)
+        except Exception as e:
+            _LOGGER.error("Error processing message: %s", e)
