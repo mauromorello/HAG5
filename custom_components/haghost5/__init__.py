@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 
+from homeassistant.helpers import frontend
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
@@ -115,6 +116,20 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     
     _LOGGER.debug("Fine registrazione della card hag5-gcode-card.")
 
+    #8 TENTATIVO 2
+    _LOGGER.debug("Inizio registrazione automatica della risorsa Lovelace...")
+
+    try:
+        # Aggiungi la risorsa direttamente tramite l'API frontend di Home Assistant
+        frontend.async_register_built_in_panel(
+            hass,
+            "module",
+            "/hacspublic/hag5-gcode-card.js",
+            "Hag5 GCode Viewer",
+        )
+        _LOGGER.info("Risorsa hag5-gcode-card.js registrata automaticamente come modulo.")
+    except Exception as e:
+        _LOGGER.error("Errore durante la registrazione automatica della risorsa Lovelace: %s", e)
 
     return True
 
