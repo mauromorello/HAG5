@@ -62,6 +62,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the HAGhost5 sensor platform."""
     ip_address = config_entry.data["ip_address"]
 
+    sensor = PrinterStatusSensor(ip_address)
+    hass.data[DOMAIN]["printer_status_sensor"] = sensor
+    async_add_entities([sensor]) 
+
     # Crea i sensori
     m992_sensor = PrinterM992Sensor(ip_address)
     online_sensor = PrinterStatusSensor(ip_address)
