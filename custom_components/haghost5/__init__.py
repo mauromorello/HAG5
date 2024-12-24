@@ -9,7 +9,8 @@ from homeassistant.components.http import HomeAssistantView
 from aiohttp import web
 
 from .const import DOMAIN
-# (nuovo) Importiamo la nuova view dal file api.py
+from .const import UPLOAD_URL
+
 
 from .api import GCodeUploadAndPrintView
 from .api import GCodeUploadView
@@ -18,8 +19,7 @@ from .api import HAG5GetGcodeFile  # <--- Import della classe
 _LOGGER = logging.getLogger(__name__)
 
 # Imposta l'endpoint e la cartella (in config) dove salveremo i file caricati
-UPLOAD_URL = "/api/haghost5/upload_gcode"
-UPLOAD_DIR_NAME = "gcodes"
+UPLOAD_DIR_NAME = "www/community/haghost5/gcodes"
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
