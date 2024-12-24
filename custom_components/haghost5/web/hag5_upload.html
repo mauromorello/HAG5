@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>Upload GCODE</title>
-  <!-- Usiamo un CSS inline che richiama alcune variabili di tema Lovelace -->
   <style>
     :root {
-      /* Se stai testando fuori da HA, puoi definire alcuni fallback. */
       --ha-card-border-radius: 12px;
       --card-background-color: #fff;
       --primary-text-color: #333;
       --ha-card-box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+      --btn-disabled-color: #ccc;
+      --btn-enabled-color: #0288D1;
     }
     body {
       margin: 0;
@@ -24,18 +24,21 @@
       box-shadow: var(--ha-card-box-shadow);
       padding: 16px;
       margin: 16px;
-      max-width: 400px;  /* puoi adattare la larghezza come preferisci */
+      max-width: 400px;
     }
-    h2 {
+    h3 {
       margin-top: 0;
       margin-bottom: 16px;
       font-size: 1.25rem;
       color: var(--primary-text-color);
     }
-    .btn-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
+    label {
+      font-weight: 500;
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+    input[type="file"] {
+      margin-bottom: 8px;
     }
     button {
       cursor: pointer;
@@ -44,21 +47,15 @@
       padding: 8px 12px;
       font-size: 0.95rem;
       color: #fff;
+      background-color: var(--btn-disabled-color);
     }
-    .btn-upload {
-      background-color: #0288D1; /* Azzurro */
+    button.enabled {
+      background-color: var(--btn-enabled-color);
     }
-    .btn-print {
-      background-color: #43A047; /* Verde */
-    }
-    label {
-      font-weight: 500;
-      margin-bottom: 4px;
-      display: inline-block;
-    }
-    .file-input {
-      margin-bottom: 8px;
-      margin-top: 4px;
+    hr {
+      margin: 16px 0;
+      border: none;
+      border-top: 1px solid #ccc;
     }
   </style>
 </head>
@@ -66,23 +63,34 @@
   <div class="ha-card">
     <h3>Carica File GCODE</h3>
 
-    <!-- FORM -->
-  <!-- Form per Upload Semplice -->
-  <form method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data">
-    <label>File GCODE (solo upload)</label>
-    <input type="file" name="file" accept=".gcode">
-    <button type="submit">Upload</button>
-  </form>
-  
-  <hr />
-  
-  <!-- Form per Upload + Print -->
-  <form method="POST" action="/api/haghost5/upload_and_print" enctype="multipart/form-data">
-    <label>File GCODE (upload + stampa)</label>
-    <input type="file" name="file" accept=".gcode">
-    <button type="submit">Upload & Print</button>
-  </form>
+    <!-- Form per Upload Semplice -->
+    <form method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data">
+      <label>File GCODE (solo upload)</label>
+      <input type="file" name="file" accept=".gcode" onchange="toggleButtonState(this, 'upload-btn')">
+      <button id="upload-btn" type="submit" disabled>Upload</button>
+    </form>
+    
+    <hr />
 
+    <!-- Form per Upload + Print -->
+    <form method="POST" action="/api/haghost5/upload_and_print" enctype="multipart/form-data">
+      <label>File GCODE (upload + stampa)</label>
+      <input type="file" name="file" accept=".gcode" onchange="toggleButtonState(this, 'print-btn')">
+      <button id="print-btn" type="submit" disabled>Upload & Print</button>
+    </form>
   </div>
+
+  <script>
+    function toggleButtonState(input, buttonId) {
+      const button = document.getElementById(buttonId);
+      if (input.files.length > 0) {
+        button.disabled = false;
+        button.classList.add('enabled');
+      } else {
+        button.disabled = true;
+        button.classList.remove('enabled');
+      }
+    }
+  </script>
 </body>
 </html>
