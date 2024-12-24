@@ -31,6 +31,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     ip_address = config_entry.data["ip_address"]
     _LOGGER.debug("Setting up HAGhost5 integration for IP: %s", ip_address)
 
+    if DOMAIN not in hass.data:
+        hass.data[DOMAIN] = {"entities": []}
+
     # 1) Registra il dispositivo esplicitamente
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
