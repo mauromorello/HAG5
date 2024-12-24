@@ -14,7 +14,7 @@ from .const import UPLOAD_URL
 
 from .api import GCodeUploadAndPrintView
 from .api import GCodeUploadView
-from .api import HAG5GetGcodeFile  # <--- Import della classe
+from .api import HAG5GetGcodeFile
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,8 +51,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         hass.config_entries.async_forward_entry_setup(config_entry, "sensor")
     )
 
-    # 3) Registra la View per l'upload semplice (/api/haghost5/upload_gcode)
-    hass.http.register_view(GCodeUploadView(ip_address=ip_address))
 
     # 4) Copia la pagina HTML in config/www/community/haghost5/hag5_upload.html
     await hass.async_add_executor_job(copy_upload_page, hass)
@@ -75,6 +73,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     view_print = GCodeUploadAndPrintView(ip_address=ip_address)
     hass.http.register_view(view_print)
     hass.http.register_view(HAG5GetGcodeFile())
+    hass.http.register_view(GCodeUploadView())
 
     #7 Registra la card
     hass.http.register_static_path(
