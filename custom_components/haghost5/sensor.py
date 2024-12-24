@@ -177,7 +177,25 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         if self._state != STATE_OFF:
             _LOGGER.info("Printer is offline.")
             self._state = STATE_OFF
-
+            
+    def send_ws_command(self, command: str):
+        """Send a command over the WebSocket."""
+        if not self._websocket_started:
+            _LOGGER.error("Cannot send command; WebSocket is not started.")
+            return
+    
+        asyncio.create_task(self._send_command_via_ws(command))
+    
+    async def _send_command_via_ws(self, command: str):
+        """Helper to send a command asynchronously via WebSocket."""
+        ws_url = f"ws://{self._ip_address}:8081/"
+        try:
+            async with ClientSession() as session:
+                async with session.ws_connect(ws_url) as ws:
+                    await ws.send_str(command)
+                    _LOGGER.info("Sent WebSocket command: %s", command)
+        except Exception as e:
+            _LOGGER.error("Error sending WebSocket command: %s", e)
 
     async def _start_websocket(self):
         """Start the WebSocket connection and process incoming messages."""
