@@ -12,6 +12,7 @@ from .const import DOMAIN
 # (nuovo) Importiamo la nuova view dal file api.py
 
 from .api import GCodeUploadAndPrintView
+from .api import GCodeUploadView
 from .api import HAG5GetGcodeFile  # <--- Import della classe
 
 _LOGGER = logging.getLogger(__name__)
