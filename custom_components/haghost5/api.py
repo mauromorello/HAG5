@@ -95,15 +95,6 @@ class GCodeUploadAndPrintView(HomeAssistantView):
         )
 
 
-# api.py
-
-import logging
-import os
-from homeassistant.components.http import HomeAssistantView
-from aiohttp import web
-
-_LOGGER = logging.getLogger(__name__)
-
 class HAG5GetGcodeFile(HomeAssistantView):
     """
     Endpoint:
