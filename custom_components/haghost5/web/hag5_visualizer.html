@@ -125,7 +125,7 @@ a, button, input, select {
 
 			function init() {
 
-					// Ottieni il parametro "filename" dalla query string dell'URL
+				// Ottieni il parametro "filename" dalla query string dell'URL
 				    const params = new URLSearchParams(window.location.search);
 				    const filename = params.get('filename'); // Ottiene il nome del file passato come parametro
 			
@@ -141,7 +141,7 @@ a, button, input, select {
 
 				const loader = new GCodeLoader();
 				    
-				    const fullPath = `gcodes/${filename}`;	
+				    const fullPath = `/gcodes/${filename}`;	
 			            loader.load(fullPath , function (object) {
 			                object.position.set(-100, -20, 100);
 			                scene.add(object);
