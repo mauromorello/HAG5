@@ -126,20 +126,30 @@ a, button, input, select {
 
 			function init() {
 
+					// Ottieni il parametro "filename" dalla query string dell'URL
+				    const params = new URLSearchParams(window.location.search);
+				    const filename = params.get('filename'); // Ottiene il nome del file passato come parametro
+			
+				    if (!filename) {
+					alert('Il parametro "filename" non è stato specificato nell\'URL.');
+					return;
+				    }
+
 				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
 				camera.position.set( 0, 0, 70 );
 
 				scene = new THREE.Scene();
 
 				const loader = new GCodeLoader();
-				loader.load( './benchy.gcode', function ( object ) {
-
-					object.position.set( - 100, - 20, 100 );
-					scene.add( object );
-
-					render();
-
-				} );
+			            loader.load(`/local/community/haghost5/config/gcode/${filename}`, function (object) {
+			                object.position.set(-100, -20, 100);
+			                scene.add(object);
+			
+			                render();
+			            }, undefined, function (error) {
+			                console.error('Errore durante il caricamento del file GCode:', error);
+			                alert(`Non è stato possibile caricare il file: ${filename}`);
+			            });
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
