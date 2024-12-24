@@ -82,12 +82,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     )
     _LOGGER.info("Risorsa Lovelace registrata manualmente.")
 
-    # Istanzio un PrinterStatusSensor
-    sensor = PrinterStatusSensor(ip_address)
-    # Salvo un riferimento globale in hass.data
-    if DOMAIN not in hass.data:
-        hass.data[DOMAIN] = {}
-    hass.data[DOMAIN]["printer_status_sensor"] = sensor
 
     return True
 
