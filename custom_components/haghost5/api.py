@@ -81,6 +81,7 @@ class GCodeUploadAndPrintView(HomeAssistantView):
         if self._sensor_ref:
             try:
                 self._sensor_ref.send_ws_command(f"M23 {filename}")
+                await asyncio.sleep(1)  # Aspetta 1 secondo prima di inviare M24
                 self._sensor_ref.send_ws_command("M24")
                 _LOGGER.info("Sent M23 %s and M24 via WebSocket.", filename)
             except Exception as e:
