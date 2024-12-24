@@ -1,67 +1,49 @@
 # api.py
 
-import logging
-import os
-import asyncio
 from homeassistant.components.http import HomeAssistantView
 from aiohttp import web, ClientSession
+import asyncio
+import os
+import logging
+
 from .const import DOMAIN
 from .const import UPLOAD_URL
-
+from .sensor import PrinterStatusSensor
 
 _LOGGER = logging.getLogger(__name__)
 
 class GCodeUploadAndPrintView(HomeAssistantView):
-    """
-    View su /api/haghost5/upload_and_print:
-      - Riceve il file GCODE (POST)
-      - Salva in config/gcodes/<filename>
-      - Manda in modo asincrono il file alla stampante (POST),
-      - Invio comandi WebSocket (M23, M24) se il sensore è disponibile.
-    """
-
     url = "/api/haghost5/upload_and_print"
     name = "api:haghost5:upload_and_print"
     requires_auth = False
 
     def __init__(self, ip_address):
-        """
-        ip_address: IP o hostname della stampante (es. config_entry.data["ip_address"])
-        """
         self._ip_address = ip_address
 
     def _get_sensor_ref(self, hass):
-        """
-        Trova il riferimento al sensore PrinterStatusSensor all'interno di hass.data.
-        """
-        sensor_ref = next(
-            (entity for entity in hass.data[DOMAIN].get("entities", [])
-             if isinstance(entity, PrinterStatusSensor)),
-            None
-        )
-        if not sensor_ref:
-            _LOGGER.warning("PrinterStatusSensor non trovato. WS commands non inviabili.")
+        sensor_ref = hass.data[DOMAIN].get("printer_status_sensor")
+        if not sensor_ref or not isinstance(sensor_ref, PrinterStatusSensor):
+            _LOGGER.warning("PrinterStatusSensor non trovato o non valido.")
+            return None
         return sensor_ref
 
     async def post(self, request):
-        """Riceve il file e inizia la stampa asincronamente."""
         hass = request.app["hass"]
 
-        # 1) Recupera il file dal form
         data = await request.post()
         file_field = data.get("file")
         if not file_field:
             return web.Response(text="No file provided", status=400)
 
         filename = file_field.filename
-        file_bytes = file_field.file.read()  # lettura in memoria
+        file_bytes = file_field.file.read()
+
         _LOGGER.info("Received file for upload_and_print: %s", filename)
 
-        # 2) Salvataggio in config/gcodes/<filename>
+        # Salvo localmente
         gcodes_dir = hass.config.path("gcodes")
         os.makedirs(gcodes_dir, exist_ok=True)
         save_path = os.path.join(gcodes_dir, filename)
-
         try:
             with open(save_path, "wb") as f:
                 f.write(file_bytes)
@@ -69,13 +51,12 @@ class GCodeUploadAndPrintView(HomeAssistantView):
             _LOGGER.error("Error saving file: %s", e)
             return web.Response(text=f"Error saving file: {e}", status=500)
 
-        # 3) Invio asincrono del file alla stampante
+        # Upload asincrono alla stampante
         upload_url = f"http://{self._ip_address}/upload?X-Filename={filename}"
         _LOGGER.debug("Uploading to printer at: %s", upload_url)
-
         try:
             async with ClientSession() as session:
-                async with session.post(upload_url, data=file_bytes, timeout=30) as resp:
+                async with session.post(upload_url, data=file_bytes, timeout=120) as resp:
                     if resp.status != 200:
                         resp_text = await resp.text()
                         _LOGGER.error("Printer upload error: %s %s", resp.status, resp_text)
@@ -90,12 +71,13 @@ class GCodeUploadAndPrintView(HomeAssistantView):
             _LOGGER.error("Exception uploading file to printer: %s", e)
             return web.Response(text=f"Exception uploading file: {e}", status=500)
 
-        # 4) Invia comandi WS
+        # Se arriviamo qui, il file è stato ricevuto correttamente dalla stampante
+        # Adesso inviamo i comandi M23/M24 (se abbiamo il sensor).
         sensor_ref = self._get_sensor_ref(hass)
         if sensor_ref:
             try:
                 sensor_ref.send_ws_command(f"M23 {filename}")
-                await asyncio.sleep(1)  # Aspetta 1 secondo prima di inviare M24
+                await asyncio.sleep(1)  # Micro ritardo
                 sensor_ref.send_ws_command("M24")
                 _LOGGER.info("Sent M23 %s and M24 via WebSocket.", filename)
             except Exception as e:
@@ -104,11 +86,7 @@ class GCodeUploadAndPrintView(HomeAssistantView):
         else:
             _LOGGER.warning("No sensor_ref found; cannot send WS commands to start print.")
 
-        return web.Response(
-            text=f"File {filename} uploaded to printer {self._ip_address} and print started!"
-        )
-
-
+        return web.Response(text=f"File {filename} uploaded to printer {self._ip_address} and print started!")
 
 class HAG5GetGcodeFile(HomeAssistantView):
     """
