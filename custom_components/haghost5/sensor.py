@@ -354,6 +354,7 @@ class PrinterM994Sensor(HAGhost5BaseSensor):
     """Sensor to capture the file name in print (from M994 messages)."""
 
     def __init__(self, ip_address):
+        super().__init__(ip_address, "printer_m994_status")
         self._ip_address = ip_address
         self._state = None
         self._attributes = {}
@@ -458,6 +459,7 @@ class PrinterM992Sensor(HAGhost5BaseSensor):
     """Sensor that captures the time elapsed (M992) converting HH:mm:ss to seconds."""
 
     def __init__(self, ip_address):
+        super().__init__(ip_address, "printer_m992_status")
         self._ip_address = ip_address
         self._state = None  # qui memorizzeremo i secondi (int)
         self._attributes = {}
@@ -550,10 +552,11 @@ class PrinterM992Sensor(HAGhost5BaseSensor):
         except Exception as e:
             _LOGGER.error("Error processing M992 message: %s", e)
 
-class TBedSensor(SensorEntity):
+class TBedSensor(HAGhost5BaseSensor):
     """Sensor for the bed temperature (extracts the value after B:)."""
 
     def __init__(self, ip_address):
+        super().__init__(ip_address, "tbed_sensor")
         self._ip_address = ip_address
         self._state = None
         self._attributes = {}
@@ -624,10 +627,11 @@ class TBedSensor(SensorEntity):
         except Exception as e:
             _LOGGER.error("Error processing bed temperature message: %s", e)
 
-class TNozzleSensor(SensorEntity):
+class TNozzleSensor(HAGhost5BaseSensor):
     """Sensor for the nozzle temperature (extracts the value after T:)."""
 
     def __init__(self, ip_address):
+        super().__init__(ip_address, "tnozzle_sensor")
         self._ip_address = ip_address
         self._state = None
         self._attributes = {}
