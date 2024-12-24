@@ -57,19 +57,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     await hass.async_add_executor_job(copy_upload_page, hass)
     await hass.async_add_executor_job(copy_visual_page, hass)
     await hass.async_add_executor_job(copy_card_page, hass)
-    #copy_upload_page(hass)
-    #copy_visual_page(hass)
-    #copy_card_page(hass)
     
-    # 4.1) Crea directory Gcode
-    path_gcodes = hass.config.path("gcodes")
-    os.makedirs(path_gcodes, exist_ok=True)
+    # Nuovo percorso per la directory GCODE
+    gcode_path = hass.config.path("www", "community", "haghost5", "gcodes")
+    
+    # Crea la directory se non esiste
+    os.makedirs(gcode_path, exist_ok=True)
+    _LOGGER.info("Created folder for GCODE files at: %s", gcode_path)
 
-    # 5) Crea (se non esiste) la cartella 'gcodes' dove verranno salvati i file
-    gcode_path = hass.config.path(UPLOAD_DIR_NAME)
-    if not os.path.exists(gcode_path):
-        os.makedirs(gcode_path, exist_ok=True)
-        _LOGGER.info("Created folder for GCODE files at: %s", gcode_path)
 
     # (nuovo) 6) Registriamo anche la view "upload_and_print"
     # Per ora, non passiamo sensor_ref (None). Se in futuro avrai
@@ -189,8 +184,11 @@ class GCodeUploadView(HomeAssistantView):
 
         file_content = file_field.file.read()
 
-        # Salviamo nella cartella config/gcodes/
-        save_dir = hass.config.path(UPLOAD_DIR_NAME)
+        # Nuovo percorso per la cartella GCODE
+        save_dir = hass.config.path("www", "community", "haghost5", "gcodes")
+        os.makedirs(save_dir, exist_ok=True)  # Crea la directory se non esiste
+
+        # Salviamo il file nella nuova directory
         save_path = os.path.join(save_dir, filename)
 
         try:
@@ -201,3 +199,4 @@ class GCodeUploadView(HomeAssistantView):
             return web.Response(text=f"Error writing file: {e}", status=500)
 
         return web.Response(text=f"File {filename} uploaded successfully.")
+
