@@ -82,8 +82,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     try:
         # Registra il percorso statico per la card
         hass.http.register_static_path(
-            "/hacspublic/hag5-gcode-card.js",  # Percorso pubblico
-            hass.config.path("www/community/haghost5/hag5-gcode-card.js"),  # File nella tua configurazione
+            "/hacspublic/hag5_gcode_card.js",  # Percorso pubblico
+            hass.config.path("www/community/haghost5/hag5_gcode_card.js"),  # File nella tua configurazione
         )
         _LOGGER.info("Percorso statico registrato: /hacspublic/hag5-gcode-card.js")
     except Exception as e:
@@ -96,14 +96,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         try:
             # Controlla se la risorsa è già registrata
             resource_exists = any(
-                "/hacspublic/hag5-gcode-card.js" in r["url"] for r in resources.async_items()
+                "/hacspublic/hag5_gcode_card.js" in r["url"] for r in resources.async_items()
             )
             if resource_exists:
-                _LOGGER.info("La risorsa hag5-gcode-card.js è già registrata.")
+                _LOGGER.info("La risorsa hag5_gcode_card.js è già registrata.")
             else:
                 # Aggiungi la risorsa a Lovelace
                 resources.async_create_item(
-                    {"res_type": "module", "url": "/hacspublic/hag5-gcode-card.js"}
+                    {"res_type": "module", "url": "/hacspublic/hag5_gcode_card.js"}
                 )
                 _LOGGER.info("Risorsa hag5-gcode-card.js aggiunta a Lovelace.")
         except Exception as e:
@@ -113,7 +113,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             "Risorse Lovelace non trovate. Potrebbe essere necessario aggiungere manualmente la card nelle risorse UI."
         )
     
-    _LOGGER.debug("Fine registrazione della card hag5-gcode-card.")
+    _LOGGER.debug("Fine registrazione della card hag5_gcode_card.")
 
 
     return True
