@@ -75,7 +75,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     online_sensor = PrinterStatusSensor(ip_address)
     hass.data[DOMAIN]["printer_status_sensor"] = online_sensor
-    async_add_entities([online_sensor]) 
+    #async_add_entities([online_sensor]) 
     
     
     # Aggiungi i sensori a Home Assistant
