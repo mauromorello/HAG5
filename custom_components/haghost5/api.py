@@ -56,16 +56,40 @@ class GCodeUploadAndPrintView(HomeAssistantView):
         
         
         # Upload asincrono alla stampante
-        upload_url = f"http://{self._ip_address}/upload?X-Filename={filename}"
+        current_timestamp = int(time.time())  # Ottiene il timestamp corrente (secondi dall'epoca)
+        upload_url = f"http://{self._ip_address}/upload?X-Filename={filename}&timestamp={current_timestamp}"
         _LOGGER.debug("Uploading to printer at: %s", upload_url)
         try:
             async with ClientSession() as session:
                 async with session.post(upload_url, data=file_bytes, timeout=120) as resp:
-                    if resp.status != 200:
-                        resp_text = await resp.text()
-                        _LOGGER.error("Printer upload error: %s %s", resp.status, resp_text)
+                    if resp.status == 200:
+                        resp_json = await resp.json()  # Converti la risposta in formato JSON
+                        if resp_json.get("err") == 0:
+                            _LOGGER.info("File uploaded successfully: %s", filename)
+                            # Se arriviamo qui, il file è stato ricevuto correttamente dalla stampante
+                            # Adesso inviamo i comandi M23/M24 (se abbiamo il sensor).
+                            sensor_ref = self._get_sensor_ref(hass)
+                            if sensor_ref:
+                                try:
+                                    sensor_ref.send_ws_command(f"M23 {filename}")
+                                    await asyncio.sleep(1)  # Micro ritardo
+                                    sensor_ref.send_ws_command("M24")
+                                    _LOGGER.info("Sent M23 %s and M24 via WebSocket.", filename)
+                                except Exception as e:
+                                    _LOGGER.error("Error sending WS commands: %s", e)
+                                    return web.Response(text=f"Error sending WS commands: {e}", status=500)
+                            else:
+                                _LOGGER.warning("No sensor_ref found; cannot send WS commands to start print.")
+                        else:
+                            _LOGGER.error("Printer returned error: %s", resp_json)
+                            return web.Response(
+                                text=f"Printer returned error: {resp_json}",
+                                status=500
+                            )
+                    else:
+                        _LOGGER.error("Printer upload failed with status: %d", resp.status)
                         return web.Response(
-                            text=f"Printer upload error: {resp.status} {resp_text}",
+                            text=f"Printer upload failed with status: {resp.status}",
                             status=500
                         )
         except asyncio.TimeoutError:
@@ -75,20 +99,7 @@ class GCodeUploadAndPrintView(HomeAssistantView):
             _LOGGER.error("Exception uploading file to printer: %s", e)
             return web.Response(text=f"Exception uploading file: {e}", status=500)
 
-        # Se arriviamo qui, il file è stato ricevuto correttamente dalla stampante
-        # Adesso inviamo i comandi M23/M24 (se abbiamo il sensor).
-        sensor_ref = self._get_sensor_ref(hass)
-        if sensor_ref:
-            try:
-                sensor_ref.send_ws_command(f"M23 {filename}")
-                await asyncio.sleep(1)  # Micro ritardo
-                sensor_ref.send_ws_command("M24")
-                _LOGGER.info("Sent M23 %s and M24 via WebSocket.", filename)
-            except Exception as e:
-                _LOGGER.error("Error sending WS commands: %s", e)
-                return web.Response(text=f"Error sending WS commands: {e}", status=500)
-        else:
-            _LOGGER.warning("No sensor_ref found; cannot send WS commands to start print.")
+
 
         return web.Response(text=f"File {filename} uploaded to printer {self._ip_address} and print started!")
 
