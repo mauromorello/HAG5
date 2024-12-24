@@ -74,6 +74,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload the integration."""
     await hass.config_entries.async_forward_entry_unload(entry, "sensor")
+    hass.http.unregister_view(GCodeUploadView)
+    hass.http.unregister_view(GCodeUploadAndPrintView)
     return True
 
 
