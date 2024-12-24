@@ -76,11 +76,21 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     hass.http.register_view(GCodeUploadView())
 
     #7 Registra la card
+    # Registra automaticamente la risorsa per la Lovelace UI
     hass.http.register_static_path(
-        "/local/community/haghost5/hag5_gcode_card.js",
-        hass.config.path("www/community/haghost5/hag5_gcode_card.js"),
+        "/hacspublic/hag5-gcode-card.js",  # Percorso pubblico
+        hass.config.path("www/community/haghost5/hag5-gcode-card.js"),  # File nella tua configurazione
     )
-    _LOGGER.info("Risorsa Lovelace registrata manualmente.")
+    
+    # Aggiungi la risorsa a Lovelace
+    resources = hass.data.get("lovelace_resources")
+    if resources is not None:
+        # Controlla se la risorsa è già registrata
+        if not any("/hacspublic/hag5-gcode-card.js" in r["url"] for r in resources.async_items()):
+            resources.async_create_item(
+                {"res_type": "module", "url": "/hacspublic/hag5-gcode-card.js"}
+            )
+            _LOGGER.info("Hag5GCodeCard aggiunta alle risorse di Lovelace.")
 
 
     return True
