@@ -82,10 +82,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     try:
         # Registra il percorso statico per la card
         hass.http.register_static_path(
-            "/hacspublic/hag5_gcode_card.js",  # Percorso pubblico
+            "/local/community/haghost5/hag5_gcode_card.js",  # Percorso pubblico
             hass.config.path("www/community/haghost5/hag5_gcode_card.js"),  # File nella tua configurazione
         )
-        _LOGGER.info("Percorso statico registrato: /hacspublic/hag5-gcode-card.js")
+        _LOGGER.info("Percorso statico registrato: /local/community/haghost5/hag5_gcode_card.js")
     except Exception as e:
         _LOGGER.error("Errore nella registrazione del percorso statico della card: %s", e)
     
@@ -96,14 +96,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         try:
             # Controlla se la risorsa è già registrata
             resource_exists = any(
-                "/hacspublic/hag5_gcode_card.js" in r["url"] for r in resources.async_items()
+                "/local/community/haghost5/hag5_gcode_card.js" in r["url"] for r in resources.async_items()
             )
             if resource_exists:
                 _LOGGER.info("La risorsa hag5_gcode_card.js è già registrata.")
             else:
                 # Aggiungi la risorsa a Lovelace
                 resources.async_create_item(
-                    {"res_type": "module", "url": "/hacspublic/hag5_gcode_card.js"}
+                    {"res_type": "module", "url": "/local/community/haghost5/hag5_gcode_card.js"}
                 )
                 _LOGGER.info("Risorsa hag5-gcode-card.js aggiunta a Lovelace.")
         except Exception as e:
