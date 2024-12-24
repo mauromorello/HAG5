@@ -2,16 +2,13 @@ class Hag5GCodeCard extends HTMLElement {
     setConfig(config) {
         this.config = config;
 
-        // Crea un contenitore per il visualizzatore
         const card = document.createElement('ha-card');
         card.header = config.title || 'GCode Viewer';
-
+        
         const container = document.createElement('div');
-        container.style.width = '100%';
-        container.style.height = '300px'; // Altezza personalizzabile
+        container.style.height = '300px'; // Imposta l'altezza personalizzata
         container.style.overflow = 'hidden';
 
-        // Crea un iframe per visualizzare il GCode
         const iframe = document.createElement('iframe');
         iframe.src = `/local/community/haghost5/hag5_viewer.html?filename=${config.filename || ''}`;
         iframe.style.border = 'none';
@@ -25,7 +22,20 @@ class Hag5GCodeCard extends HTMLElement {
     }
 
     getCardSize() {
-        return 3; // Numero di righe occupate nella dashboard
+        return 3; // Righe occupate nella dashboard
+    }
+
+    static getConfigElement() {
+        const element = document.createElement('hui-generic-entity-row');
+        element.innerHTML = `
+            <div>
+                <ha-textfield
+                    label="File Name"
+                    type="text"
+                    configElement="filename"
+                ></ha-textfield>
+            </div>
+        `;
     }
 }
 
