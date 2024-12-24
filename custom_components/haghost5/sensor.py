@@ -187,7 +187,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                     async with session.ws_connect(ws_url) as ws:
                         async for msg in ws:
                             if msg.type == WSMsgType.TEXT:
-                                _LOGGER.debug("WebSocket message received: %s", msg.data)
+                                #_LOGGER.debug("WebSocket message received: %s", msg.data)
     
                                 # Pass the message to the M997 and M27 sensors for processing
                                 if self._m997_sensor:
