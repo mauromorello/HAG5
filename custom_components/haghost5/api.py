@@ -6,6 +6,7 @@ import asyncio
 from homeassistant.components.http import HomeAssistantView
 from aiohttp import web, ClientSession
 from .const import DOMAIN
+from .const import UPLOAD_URL
 
 
 _LOGGER = logging.getLogger(__name__)
