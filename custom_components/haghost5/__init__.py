@@ -51,9 +51,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     hass.http.register_view(GCodeUploadView())
 
     # 4) Copia la pagina HTML in config/www/community/haghost5/hag5_upload.html
-    copy_upload_page(hass)
-    copy_visual_page(hass)
-    copy_card_page(hass)
+    await hass.async_add_executor_job(copy_upload_page, hass)
+    await hass.async_add_executor_job(copy_visual_page hass)
+    await hass.async_add_executor_job(copy_card_page, hass)
+    #copy_upload_page(hass)
+    #copy_visual_page(hass)
+    #copy_card_page(hass)
     
     # 4.1) Crea directory Gcode
     path_gcodes = hass.config.path("gcodes")
