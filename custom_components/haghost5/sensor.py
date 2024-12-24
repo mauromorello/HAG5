@@ -53,6 +53,10 @@ class HAGhost5BaseSensor(SensorEntity):
             "model": "3D Printer",
             "sw_version": "1.0",
         }
+        
+    async def async_update(self):
+        """Default update method for HAGhost5 sensors."""
+        _LOGGER.debug("async_update called for %s, no custom implementation.", self._sensor_name)        
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the HAGhost5 sensor platform."""
