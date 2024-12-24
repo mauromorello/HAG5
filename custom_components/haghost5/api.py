@@ -80,7 +80,7 @@ class GCodeUploadAndPrintView(HomeAssistantView):
         # 4) Invia comandi WS se sensor_ref è disponibile
         if self._sensor_ref:
             try:
-                self._sensor_ref.send_ws_command(f"M23 {filename}")
+                self._sensor_ref.send_ws_command(f"M23 {filename}    M24")
                 await asyncio.sleep(1)  # Aspetta 1 secondo prima di inviare M24
                 self._sensor_ref.send_ws_command("M24")
                 _LOGGER.info("Sent M23 %s and M24 via WebSocket.", filename)
