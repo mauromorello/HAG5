@@ -54,6 +54,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     copy_upload_page(hass)
     copy_visual_page(hass)
     copy_card_page(hass)
+    
+    # 4.1) Crea directory Gcode
+    path_gcodes = hass.config.path("gcodes")
+    os.makedirs(path_gcodes, exist_ok=True)
 
     # 5) Crea (se non esiste) la cartella 'gcodes' dove verranno salvati i file
     gcode_path = hass.config.path(UPLOAD_DIR_NAME)
@@ -93,8 +97,6 @@ def copy_upload_page(hass: HomeAssistant):
 
     dst_file = os.path.join(dst_dir, "hag5_upload.html")
 
-    path_gcodes = hass.config.path("gcodes")
-    os.makedirs(path_gcodes, exist_ok=True)
 
     try:
         shutil.copyfile(src_file, dst_file)
@@ -116,8 +118,7 @@ def copy_visual_page(hass: HomeAssistant):
 
     dst_file = os.path.join(dst_dir, "hag5_visualizer.html")
 
-    path_gcodes = hass.config.path("gcodes")
-    os.makedirs(path_gcodes, exist_ok=True)
+
 
     try:
         shutil.copyfile(src_file, dst_file)
