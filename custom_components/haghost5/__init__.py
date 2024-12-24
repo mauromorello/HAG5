@@ -52,7 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     # 4) Copia la pagina HTML in config/www/community/haghost5/hag5_upload.html
     await hass.async_add_executor_job(copy_upload_page, hass)
-    await hass.async_add_executor_job(copy_visual_page hass)
+    await hass.async_add_executor_job(copy_visual_page, hass)
     await hass.async_add_executor_job(copy_card_page, hass)
     #copy_upload_page(hass)
     #copy_visual_page(hass)
