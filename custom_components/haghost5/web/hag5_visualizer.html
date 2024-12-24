@@ -141,7 +141,7 @@ a, button, input, select {
 
 				const loader = new GCodeLoader();
 				    
-				    const fullPath = `/gcodes/${filename}`;	
+				    const fullPath = `gcodes/${filename}`;	
 			            loader.load(fullPath , function (object) {
 			                object.position.set(-100, -20, 100);
 			                scene.add(object);
