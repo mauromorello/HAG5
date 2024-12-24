@@ -135,7 +135,7 @@ def copy_card_page(hass: HomeAssistant):
     in config/www/community/haghost5/hag5_gcode_card.js,
     in modo che sia accessibile via /local/community/haghost5/hag5_gcode_card.js
     """
-    src_file = hass.config.path("custom_components/haghost5/www/hag5_gcode_card.js")
+    src_file = hass.config.path("custom_components/haghost5/web/hag5_gcode_card.js")
 
     # Creiamo la cartella /www/community/haghost5/ se non esiste
     dst_dir = hass.config.path("www", "community", "haghost5")
