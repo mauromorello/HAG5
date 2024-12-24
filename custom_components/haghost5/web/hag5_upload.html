@@ -21,9 +21,9 @@
     .ha-card {
       background: var(--card-background-color);
       border-radius: var(--ha-card-border-radius);
-      box-shadow: var(--ha-card-box-shadow);
-      padding: 16px;
-      margin: 16px;
+      
+      padding: 8px;
+      margin: 8px;
       max-width: 400px;
     }
     h3 {
@@ -61,7 +61,6 @@
 </head>
 <body>
   <div class="ha-card">
-    <h3>Carica File GCODE</h3>
 
     <!-- Form per Upload Semplice -->
     <form method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data">
