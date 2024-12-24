@@ -44,13 +44,22 @@ class GCodeUploadAndPrintView(HomeAssistantView):
         gcodes_dir = hass.config.path("gcodes")
         os.makedirs(gcodes_dir, exist_ok=True)
         save_path = os.path.join(gcodes_dir, filename)
-        try:
-            with open(save_path, "wb") as f:
-                f.write(file_bytes)
-        except Exception as e:
-            _LOGGER.error("Error saving file: %s", e)
-            return web.Response(text=f"Error saving file: {e}", status=500)
+        #try:
+        #    with open(save_path, "wb") as f:
+        #        f.write(file_bytes)
+        #except Exception as e:
+        #    _LOGGER.error("Error saving file: %s", e)
+        #    return web.Response(text=f"Error saving file: {e}", status=500)
+        #
+        
+        # Salvataggio in config/gcodes/<filename> SENZA bloccare
+        def _write_file(path, data):
+            with open(path, "wb") as f:
+                f.write(data)
+    
+        await hass.async_add_executor_job(_write_file, save_path, file_bytes)
 
+        
         # Upload asincrono alla stampante
         upload_url = f"http://{self._ip_address}/upload?X-Filename={filename}"
         _LOGGER.debug("Uploading to printer at: %s", upload_url)
