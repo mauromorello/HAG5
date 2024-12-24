@@ -76,7 +76,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         (entity for entity in hass.data[DOMAIN]["entities"] if isinstance(entity, PrinterStatusSensor)), 
         None
     )
-    
+    _LOGGER.info("GCodeUploadAndPrintView: %s", sensor_ref)
     view_print = GCodeUploadAndPrintView(ip_address=ip_address, sensor_ref=sensor_ref)
     hass.http.register_view(view_print)
     hass.http.register_view(HAG5GetGcodeFile())
