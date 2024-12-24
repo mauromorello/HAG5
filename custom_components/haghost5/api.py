@@ -1,5 +1,6 @@
 # api.py
 
+import time
 from homeassistant.components.http import HomeAssistantView
 from aiohttp import web, ClientSession
 import asyncio
