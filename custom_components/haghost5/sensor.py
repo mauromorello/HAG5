@@ -228,6 +228,11 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
     @property
     def state(self):
         return self._state
+        
+    @property
+    def extra_state_attributes(self):
+        """Eventuali attributi extra da visualizzare in HA."""
+        return self._attributes        
 
     @property
     def device_info(self):
