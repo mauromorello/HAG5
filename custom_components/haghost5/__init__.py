@@ -71,7 +71,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # (nuovo) 6) Registriamo anche la view "upload_and_print"
     # Per ora, non passiamo sensor_ref (None). Se in futuro avrai
     # un oggetto per inviare i comandi WS, lo passerai qui.
-    view_print = GCodeUploadAndPrintView(ip_address=ip_address, sensor_ref=None)
+    
+    sensor_ref = next(
+        (entity for entity in hass.data[DOMAIN]["entities"] if isinstance(entity, PrinterStatusSensor)), 
+        None
+    )
+    
+    view_print = GCodeUploadAndPrintView(ip_address=ip_address, sensor_ref=sensor_ref)
     hass.http.register_view(view_print)
     hass.http.register_view(HAG5GetGcodeFile())
 
