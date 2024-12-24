@@ -73,7 +73,6 @@ class GCodeUploadAndPrintView(HomeAssistantView):
                             if sensor_ref:
                                 try:
                                     sensor_ref.send_ws_command(f"M23 {filename}")
-                                    await asyncio.sleep(1)  # Micro ritardo
                                     sensor_ref.send_ws_command("M24")
                                     _LOGGER.info("Sent M23 %s and M24 via WebSocket.", filename)
                                 except Exception as e:
