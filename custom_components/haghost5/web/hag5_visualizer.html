@@ -140,7 +140,9 @@ a, button, input, select {
 				scene = new THREE.Scene();
 
 				const loader = new GCodeLoader();
-			            loader.load(`/local/community/haghost5/config/gcode/${filename}`, function (object) {
+				    const basePath = `${window.location.origin}/local/community/haghost5/config/gcode/`;
+				    const fullPath = `${basePath}${filename}`;	
+			            loader.load(fullPath , function (object) {
 			                object.position.set(-100, -20, 100);
 			                scene.add(object);
 			
