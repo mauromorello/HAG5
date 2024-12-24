@@ -75,15 +75,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     hass.http.register_view(view_print)
     hass.http.register_view(HAG5GetGcodeFile())
 
-    await hass.services.async_call(
-        "lovelace",
-        "resources/create",
-        {
-            "url": "/local/community/haghost5/hag5_gcode_card.js",
-            "res_type": "module"
-        },
-        blocking=True
+    #7 Registra la card
+    hass.http.register_static_path(
+        "/local/community/haghost5/hag5_gcode_card.js",
+        hass.config.path("www/community/haghost5/hag5_gcode_card.js"),
     )
+    _LOGGER.info("Risorsa Lovelace registrata manualmente.")
 
     return True
 
