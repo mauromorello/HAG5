@@ -78,7 +78,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     #7 Registra la card
     # Registra automaticamente la risorsa per la Lovelace UI
     hass.http.register_static_path(
-        "/hacspublic/hag5-gcode-card.js",  # Percorso pubblico
+        "/hacsfiles/haghost5/hag5-gcode-card.js",  # Percorso pubblico
         hass.config.path("www/community/haghost5/hag5-gcode-card.js"),  # File nella tua configurazione
     )
     
