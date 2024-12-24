@@ -52,7 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     )
 
     # 3) Registra la View per l'upload semplice (/api/haghost5/upload_gcode)
-    hass.http.register_view(GCodeUploadView())
+    hass.http.register_view(GCodeUploadView(ip_address=ip_address))
 
     # 4) Copia la pagina HTML in config/www/community/haghost5/hag5_upload.html
     await hass.async_add_executor_job(copy_upload_page, hass)
