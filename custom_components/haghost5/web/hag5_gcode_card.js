@@ -108,4 +108,4 @@ class Hag5GCodeCard extends LitElement {
     }
 }
 
-customElements.define('hag5-gcode-card', Hag5GCodeCard);
+customElements.define('hag5_gcode_card', Hag5GCodeCard);
