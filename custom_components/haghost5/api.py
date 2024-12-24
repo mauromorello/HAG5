@@ -149,3 +149,48 @@ class HAG5GetGcodeFile(HomeAssistantView):
 
         # 5) Risponde con il contenuto, come text/plain
         return web.Response(text=file_content, content_type="text/plain")
+
+
+class GCodeUploadView(HomeAssistantView):
+    """
+    View per gestire l'upload di file GCODE su /api/haghost5/upload_gcode
+    Esempio di form:
+      <form method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data">
+        <input type="file" name="file" />
+        <button type="submit">Invia</button>
+      </form>
+    """
+
+    url = UPLOAD_URL
+    name = "api:haghost5:upload_gcode"
+    requires_auth = False  # Richiede login su HA
+
+    async def post(self, request):
+        """Handle POST request for file upload."""
+        hass = request.app["hass"]
+
+        data = await request.post()
+        file_field = data.get("file")
+        if not file_field:
+            return web.Response(text="No file provided", status=400)
+
+        filename = file_field.filename
+        _LOGGER.info("Received GCODE file: %s", filename)
+
+        file_content = file_field.file.read()
+
+        # Nuovo percorso per la cartella GCODE
+        save_dir = hass.config.path("www", "community", "haghost5", "gcodes")
+        os.makedirs(save_dir, exist_ok=True)  # Crea la directory se non esiste
+
+        # Salviamo il file nella nuova directory
+        save_path = os.path.join(save_dir, filename)
+
+        try:
+            with open(save_path, "wb") as f:
+                f.write(file_content)
+        except Exception as e:
+            _LOGGER.error("Error writing file: %s", e)
+            return web.Response(text=f"Error writing file: {e}", status=500)
+
+        return web.Response(text=f"File {filename} uploaded successfully.")
