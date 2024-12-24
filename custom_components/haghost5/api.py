@@ -162,7 +162,7 @@ class GCodeUploadView(HomeAssistantView):
       </form>
     """
 
-    
+    url = "/api/haghost5/upload_gcode"  # Aggiungi il percorso URL
     name = "api:haghost5:upload_gcode"
     requires_auth = False  # Richiede login su HA
 
