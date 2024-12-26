@@ -1,8 +1,10 @@
 class Hag5RendererCard extends HTMLElement {
-
     config;
-    content;
+    iframe;
+    currentFileName;
+    currentProgress;
 
+    // required
     setConfig(config) {
         this.config = config;
     }
@@ -12,12 +14,22 @@ class Hag5RendererCard extends HTMLElement {
         const printProgressEntity = 'sensor.print_progress';
 
         const printingFileNameState = hass.states[printingFileNameEntity]?.state || 'unavailable';
-        const printProgressState = hass.states[printProgressEntity]?.state || 'unavailable';
+        const printProgressState = hass.states[printProgressEntity]?.state || '0';
 
-        const fileName = printingFileNameState !== 'unavailable' && printingFileNameState.trim() !== '' ? printingFileNameState : 'placeholder.gcode';
+        // Aggiorna il file in stampa se è cambiato
+        if (this.currentFileName !== printingFileNameState) {
+            this.currentFileName = printingFileNameState;
+            this.updateIframe({ fileName: this.currentFileName, progress: printProgressState });
+        }
 
-        // Initialize the card content if not already initialized
-        if (!this.content) {
+        // Aggiorna la percentuale se è cambiata
+        if (this.currentProgress !== printProgressState) {
+            this.currentProgress = printProgressState;
+            this.updateIframe({ progress: this.currentProgress });
+        }
+
+        // Crea il contenuto della card solo se non esiste
+        if (!this.iframe) {
             this.innerHTML = `
                 <ha-card header="3D Print Renderer">
                     <div class="card-content">
@@ -25,28 +37,19 @@ class Hag5RendererCard extends HTMLElement {
                     </div>
                 </ha-card>
             `;
-            this.content = this.querySelector('#renderer-iframe');
+            this.iframe = this.querySelector('#renderer-iframe');
         }
-
-        // Send data to iframe
-        this.sendMessageToIframe({ fileName, progress: printProgressState });
     }
 
-    sendMessageToIframe(data) {
-        if (this.content) {
-            this.content.addEventListener('load', () => {
-                if (this.content.contentWindow) {
-                    this.content.contentWindow.postMessage(data, '*');
-                    console.log('Message sent to iframe:', data);
-                } else {
-                    console.warn('Iframe content window is not accessible.');
-                }
-            });
+    // Funzione per inviare messaggi all'iframe
+    updateIframe(data) {
+        if (this.iframe && this.iframe.contentWindow) {
+            this.iframe.contentWindow.postMessage(data, '*');
+            console.log('Sent message to iframe:', data);
         } else {
-            console.warn('Iframe is not ready. Message not sent:', data);
+            console.warn('Iframe not ready to receive messages.');
         }
     }
-    
-    }
+}
 
 customElements.define('hag5-renderer-card', Hag5RendererCard);
