@@ -55,24 +55,27 @@ class Hag5RendererCard extends HTMLElement {
     initializeRenderer(filePath) {
         // Clear the previous content
         this.content.innerHTML = '';
+        
+        const threeScript = document.createElement('script');
+        threeScript.src = "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js";
+        threeScript.type = "module";
+        threeScript.onload = () => {
+            console.log("Three.js loaded successfully.");
+        };
+        threeScript.onerror = () => {
+            console.error("Failed to load Three.js.");
+        };
+        document.head.appendChild(threeScript);
 
-        // Create and append the canvas
-        const scriptImportMap = document.createElement('script');
-        scriptImportMap.type = 'importmap';
-        scriptImportMap.innerHTML = JSON.stringify({
-            imports: {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
-            }
-        });
-        this.content.appendChild(scriptImportMap);
+
 
         const scriptModule = document.createElement('script');
         scriptModule.type = 'module';
         scriptModule.innerHTML = `
-            import * as THREE from 'three';
-            import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-            import { GCodeLoader } from 'three/addons/loaders/GCodeLoader.js';
+            import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js';
+            import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/controls/OrbitControls.js';
+            import { GCodeLoader } from 'https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/loaders/GCodeLoader.js';
+
 
             let camera, scene, renderer;
 
@@ -87,15 +90,21 @@ class Hag5RendererCard extends HTMLElement {
 
                 scene = new THREE.Scene();
 
-                const loader = new GCodeLoader();
-                loader.load('${filePath}', function (object) {
-                    object.position.set(-100, -20, 100);
-                    scene.add(object);
-
-                    render();
-                }, undefined, function (error) {
-                    console.error('Errore durante il caricamento del file GCode:', error);
-                });
+                console.log('Initializing renderer with file:', filePath);
+                
+                try {
+                    const loader = new GCodeLoader();
+                    loader.load(filePath, function (object) {
+                        console.log('GCode file loaded successfully:', filePath);
+                        object.position.set(-100, -20, 100);
+                        scene.add(object);
+                        render();
+                    }, undefined, function (error) {
+                        console.error('Error loading GCode file:', error);
+                    });
+                } catch (e) {
+                    console.error('Error during renderer initialization:', e);
+                }
 
                 renderer = new THREE.WebGLRenderer( { antialias: true } );
                 renderer.setPixelRatio(window.devicePixelRatio);
