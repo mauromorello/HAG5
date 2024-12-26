@@ -208,6 +208,9 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._websocket_started = True
         ws_url = f"ws://{self._ip_address}:8081/"
         _LOGGER.info("Connecting to WebSocket at: %s", ws_url)
+
+        # Avvia il polling dei comandi in parallelo
+        asyncio.create_task(self._start_polling_commands())
     
         while self._state == STATE_ON:
             try:
@@ -240,6 +243,21 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     
         self._websocket_started = False  # WebSocket chiuso, pronto per riaprirlo
 
+    async def _start_polling_commands(self):
+        """Start polling commands to the printer every 5 seconds."""
+        _LOGGER.info("Starting polling commands to the printer.")
+        while self._state == STATE_ON:
+            try:
+                if self._websocket_started:
+                    commands = ["M105", "M997", "M994", "M992", "M27"]
+                    for command in commands:
+                        await self._send_command_via_ws(command)
+                        await asyncio.sleep(0.1)  # Aggiungi una breve pausa tra i comandi
+                await asyncio.sleep(5)  # Aspetta 5 secondi prima di inviare di nuovo i comandi
+            except Exception as e:
+                _LOGGER.error("Error during polling commands: %s", e)
+                break
+        _LOGGER.info("Polling commands stopped because the printer is offline.")
 
 
 class PrinterM997Sensor(HAGhost5BaseSensor):
