@@ -80,21 +80,26 @@ function init() {
 
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('message', (event) => {
-    try {
-        const data = event.data;
-
-        if (data.fileName && data.fileName !== currentFileName) {
-            console.log('File name changed. Reloading GCode:', data.fileName);
-            loadGCode(data.fileName);
+        try {
+            const data = event.data;
+    
+            if (data.fileName && data.fileName !== currentFileName) {
+                currentFileName = data.fileName;
+                console.log('File name changed. Reloading GCode:', currentFileName);
+                loadGCode(currentFileName, data.progress || 0); // Passa la percentuale al caricamento
+            }
+    
+            if (data.progress !== undefined) {
+                progressPercentage = data.progress;
+                statusDiv.textContent = `In stampa: ${currentFileName || 'N/A'} - Completato: ${progressPercentage}%`;
+    
+                // Aggiorna dinamicamente la colorazione del GCode
+                const loader = new GCodeLoader();
+                loader.parse(currentGCodeData, progressPercentage); // Usa i dati già caricati per aggiornare la visualizzazione
+            }
+        } catch (e) {
+            console.error('Error processing message:', e);
         }
-
-        if (data.progress !== undefined) {
-            progressPercentage = data.progress;
-            statusDiv.textContent = `In stampa: ${currentFileName || 'N/A'} - Completato: ${progressPercentage}%`;
-        }
-    } catch (e) {
-        console.error('Error processing message:', e);
-    }
     });
 }
 
@@ -109,21 +114,19 @@ function render() {
     renderer.render(scene, camera);
 }
 
-function loadGCode(filename) {
-    currentFileName = filename;
+function loadGCode(fileName, progressPercentage = 0) {
     const loader = new GCodeLoader();
-    const fullPath = `gcodes/${filename}`;
-
-    loader.load(fullPath, (object) => {
-        scene.clear();
-        object.position.set(-100, -20, 100);
-        scene.add(object);
-        render();
-        statusDiv.textContent = `In stampa: ${filename} - Completato: ${progressPercentage}%`;
-    }, undefined, (error) => {
-        console.error('Errore durante il caricamento del file GCode:', error);
-        alert(`Non è stato possibile caricare il file: ${filename}`);
-    });
+    loader.load(
+        `gcodes/${fileName}`,
+        function (object) {
+            scene.clear(); // Pulisci la scena corrente
+            scene.add(object); // Aggiungi il GCode alla scena
+        },
+        undefined,
+        function (error) {
+            console.error('Errore durante il caricamento del file GCode:', error);
+        }
+    );
 }
 
 
