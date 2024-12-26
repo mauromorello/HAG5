@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import random
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
