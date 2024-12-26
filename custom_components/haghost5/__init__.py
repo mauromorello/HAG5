@@ -55,7 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # 4) Copia la pagina HTML in config/www/community/haghost5/hag5_upload.html
     await hass.async_add_executor_job(copy_upload_page, hass)
     await hass.async_add_executor_job(copy_visual_page, hass)
-    await hass.async_add_executor_job(copy_card_page, hass)
+    await hass.async_add_executor_job(copy_renderer_card_page, hass)
     
     # Nuovo percorso per la directory GCODE
     gcode_path = hass.config.path("www", "community", "haghost5", "gcodes")
@@ -169,23 +169,24 @@ def copy_visual_page(hass: HomeAssistant):
     except Exception as e:
         _LOGGER.error("Error copying hag5_visualizer.html: %s", e)
 
-def copy_card_page(hass: HomeAssistant):
+def copy_renderer_card_page(hass: HomeAssistant):
     """
-    Copia il file 'hag5_gcode_card.js' dalla cartella custom_components/haghost5/www/
-    in config/www/community/haghost5/hag5_gcode_card.js,
-    in modo che sia accessibile via /local/community/haghost5/hag5_gcode_card.js
+    Copia il file 'hag5-renderer-card.js' dalla cartella custom_components/haghost5/web/
+    in config/www/community/haghost5/hag5-renderer-card/hag5-renderer-card.js,
+    in modo che sia accessibile via /local/community/haghost5/hag5-renderer-card/hag5-renderer-card.js
     """
-    src_file = hass.config.path("custom_components/haghost5/web/hag5_gcode_card.js")
+    src_file = hass.config.path("custom_components/haghost5/web/hag5-renderer-card.js")
 
-    # Creiamo la cartella /www/community/haghost5/ se non esiste
-    dst_dir = hass.config.path("www", "community", "haghost5")
+    # Creiamo la cartella /www/community/haghost5/hag5-renderer-card/ se non esiste
+    dst_dir = hass.config.path("www", "community", "haghost5", "hag5-renderer-card")
     os.makedirs(dst_dir, exist_ok=True)
 
-    dst_file = os.path.join(dst_dir, "hag5_gcode_card.js")
+    dst_file = os.path.join(dst_dir, "hag5-renderer-card.js")
 
     try:
         shutil.copyfile(src_file, dst_file)
-        _LOGGER.info("Copied hag5_gcode_card.js to %s", dst_file)
+        _LOGGER.info("Copied hag5-renderer-card.js to %s", dst_file)
     except Exception as e:
-        _LOGGER.error("Error copying hag5_gcode_card.js: %s", e)
+        _LOGGER.error("Error copying hag5-renderer-card.js: %s", e)
+
 
