@@ -109,11 +109,11 @@ function loadGCode(filename) {
 }
 
 function connectWebSocket() {
-    const wsUrl = `ws://${window.location.hostname}:8123/api/websocket`;
+    const wsUrl = `ws://${window.location.hostname}:12345`; // Porta usata dalla card
     const websocket = new WebSocket(wsUrl);
 
     websocket.onopen = () => {
-        console.log('WebSocket connection established.');
+        console.log('WebSocket connection established with card.');
     };
 
     websocket.onmessage = (event) => {
@@ -143,6 +143,7 @@ function connectWebSocket() {
         setTimeout(connectWebSocket, 5000);
     };
 }
+
 </script>
 
 </body>
