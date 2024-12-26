@@ -1,14 +1,3 @@
-
-import {
-	BufferGeometry,
-	FileLoader,
-	Float32BufferAttribute,
-	Group,
-	LineBasicMaterial,
-	LineSegments,
-	Loader
-} from 'three';
-
 /**
  * GCodeLoader is used to load gcode files usually used for 3D printing or CNC applications.
  *
