@@ -233,6 +233,7 @@ function loadGCode(fileName, progressPercentage = 0) {
         `gcodes/${fileName}`,
         (object) => {
             scene.clear();
+            object.position.set(-100, -20, 100);  // Added position setting
             scene.add(object);
         },
         undefined,
