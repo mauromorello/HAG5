@@ -2,6 +2,7 @@ class Hag5RendererCard extends HTMLElement {
 
     config;
     content;
+    currentFilePath;
 
     // required
     setConfig(config) {
@@ -18,23 +19,29 @@ class Hag5RendererCard extends HTMLElement {
         const fileName = printingFileNameState !== 'unavailable' && printingFileNameState.trim() !== '' ? printingFileNameState : 'placeholder.gcode';
         const filePath = `/local/community/haghost5/gcodes/${fileName}`;
 
-        // done once
-        if (!this.content) {
-            this.innerHTML = `
-                <ha-card header="3D Print Renderer">
-                    <div class="card-content">
-                        <div id="renderer-container" style="height: 400px; background-color: black;"></div>
-                    </div>
-                </ha-card>
-            `;
-            this.content = this.querySelector('#renderer-container');
+        // Check if the file path has changed
+        if (this.currentFilePath !== filePath) {
+            this.currentFilePath = filePath;
+
+            // Initialize or reinitialize the renderer with the new file
+            if (!this.content) {
+                this.innerHTML = `
+                    <ha-card header="3D Print Renderer">
+                        <div class="card-content">
+                            <div id="renderer-container" style="height: 400px; background-color: black;"></div>
+                        </div>
+                    </ha-card>
+                `;
+                this.content = this.querySelector('#renderer-container');
+            }
 
             this.initializeRenderer(filePath);
         }
     }
 
     initializeRenderer(filePath) {
-        const container = this.content;
+        // Clear the previous content
+        this.content.innerHTML = '';
 
         // Create and append the canvas
         const scriptImportMap = document.createElement('script');
@@ -45,7 +52,7 @@ class Hag5RendererCard extends HTMLElement {
                 "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
             }
         });
-        container.appendChild(scriptImportMap);
+        this.content.appendChild(scriptImportMap);
 
         const scriptModule = document.createElement('script');
         scriptModule.type = 'module';
@@ -60,6 +67,8 @@ class Hag5RendererCard extends HTMLElement {
             render();
 
             function init() {
+                const container = document.getElementById('renderer-container');
+
                 camera = new THREE.PerspectiveCamera( 60, container.clientWidth / container.clientHeight, 1, 1000 );
                 camera.position.set( 0, 0, 70 );
 
@@ -102,7 +111,7 @@ class Hag5RendererCard extends HTMLElement {
             }
         `;
 
-        container.appendChild(scriptModule);
+        this.content.appendChild(scriptModule);
     }
 }
 
