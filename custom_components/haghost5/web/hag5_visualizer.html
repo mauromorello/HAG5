@@ -225,16 +225,6 @@ function init() {
 
     window.addEventListener('resize', onWindowResize);
 
-    window.addEventListener('message', (event) => {
-        const data = event.data;
-        if (data.fileName) {
-            loadGCode(data.fileName, data.progress || 0);
-        }
-        if (data.progress !== undefined) {
-            progressPercentage = data.progress;
-            statusDiv.textContent = `In stampa: ${data.fileName || 'N/A'} - Completato: ${progressPercentage}%`;
-        }
-    });
 }
 
 function loadGCode(fileName, progressPercentage = 0) {
@@ -262,6 +252,18 @@ function onWindowResize() {
 function render() {
     renderer.render(scene, camera);
 }
+
+window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (data.fileName) {
+        loadGCode(data.fileName, data.progress || 0);
+    }
+    if (data.progress !== undefined) {
+        progressPercentage = data.progress;
+        statusDiv.textContent = `In stampa: ${data.fileName || 'N/A'} - Completato: ${progressPercentage}%`;
+    }
+});
+    
 </script>
 </body>
 </html>
