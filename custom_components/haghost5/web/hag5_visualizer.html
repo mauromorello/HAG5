@@ -108,41 +108,23 @@ function loadGCode(filename) {
     });
 }
 
-function connectWebSocket() {
-    const wsUrl = `ws://${window.location.hostname}:12345`; // Porta usata dalla card
-    const websocket = new WebSocket(wsUrl);
+window.addEventListener('message', (event) => {
+    try {
+        const data = event.data;
 
-    websocket.onopen = () => {
-        console.log('WebSocket connection established with card.');
-    };
-
-    websocket.onmessage = (event) => {
-        try {
-            const data = JSON.parse(event.data);
-
-            if (data.fileName && data.fileName !== currentFileName) {
-                console.log('File name changed. Reloading GCode:', data.fileName);
-                loadGCode(data.fileName);
-            }
-
-            if (data.progress !== undefined) {
-                progressPercentage = data.progress;
-                statusDiv.textContent = `In stampa: ${currentFileName || 'N/A'} - Completato: ${progressPercentage}%`;
-            }
-        } catch (e) {
-            console.error('Error processing WebSocket message:', e);
+        if (data.fileName && data.fileName !== currentFileName) {
+            console.log('File name changed. Reloading GCode:', data.fileName);
+            loadGCode(data.fileName);
         }
-    };
 
-    websocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-    };
-
-    websocket.onclose = () => {
-        console.warn('WebSocket connection closed. Reconnecting in 5 seconds...');
-        setTimeout(connectWebSocket, 5000);
-    };
-}
+        if (data.progress !== undefined) {
+            progressPercentage = data.progress;
+            statusDiv.textContent = `In stampa: ${currentFileName || 'N/A'} - Completato: ${progressPercentage}%`;
+        }
+    } catch (e) {
+        console.error('Error processing message:', e);
+    }
+});
 
 </script>
 
