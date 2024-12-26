@@ -76,8 +76,23 @@ function init() {
     controls.maxDistance = 100;
 
     window.addEventListener('resize', onWindowResize);
+    window.addEventListener('message', (event) => {
+    try {
+        const data = event.data;
 
-    connectWebSocket();
+        if (data.fileName && data.fileName !== currentFileName) {
+            console.log('File name changed. Reloading GCode:', data.fileName);
+            loadGCode(data.fileName);
+        }
+
+        if (data.progress !== undefined) {
+            progressPercentage = data.progress;
+            statusDiv.textContent = `In stampa: ${currentFileName || 'N/A'} - Completato: ${progressPercentage}%`;
+        }
+    } catch (e) {
+        console.error('Error processing message:', e);
+    }
+    });
 }
 
 function onWindowResize() {
@@ -108,23 +123,6 @@ function loadGCode(filename) {
     });
 }
 
-window.addEventListener('message', (event) => {
-    try {
-        const data = event.data;
-
-        if (data.fileName && data.fileName !== currentFileName) {
-            console.log('File name changed. Reloading GCode:', data.fileName);
-            loadGCode(data.fileName);
-        }
-
-        if (data.progress !== undefined) {
-            progressPercentage = data.progress;
-            statusDiv.textContent = `In stampa: ${currentFileName || 'N/A'} - Completato: ${progressPercentage}%`;
-        }
-    } catch (e) {
-        console.error('Error processing message:', e);
-    }
-});
 
 </script>
 
