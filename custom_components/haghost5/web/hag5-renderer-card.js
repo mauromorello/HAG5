@@ -2,7 +2,6 @@ class Hag5RendererCard extends HTMLElement {
 
     config;
     content;
-    websocketServer;
 
     setConfig(config) {
         this.config = config;
@@ -27,38 +26,17 @@ class Hag5RendererCard extends HTMLElement {
                 </ha-card>
             `;
             this.content = this.querySelector('#renderer-iframe');
-
-            // Start WebSocket server
-            this.startWebSocketServer();
         }
 
-        // Send updated data to the WebSocket clients
-        this.broadcastWebSocketMessage({ fileName, progress: printProgressState });
+        // Send data to iframe
+        this.sendMessageToIframe({ fileName, progress: printProgressState });
     }
 
-    startWebSocketServer() {
-        this.websocketServer = new WebSocketServer({ port: 12345 }); // Port for WebSocket server
-
-        this.websocketServer.on('connection', (socket) => {
-            console.log('WebSocket client connected.');
-
-            socket.on('message', (message) => {
-                console.log('Received message from client:', message);
-            });
-
-            socket.on('close', () => {
-                console.log('WebSocket client disconnected.');
-            });
-        });
-    }
-
-    broadcastWebSocketMessage(data) {
-        if (this.websocketServer) {
-            this.websocketServer.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify(data));
-                }
-            });
+    sendMessageToIframe(data) {
+        if (this.content) {
+            this.content.contentWindow.postMessage(data, '*');
+        } else {
+            console.warn('Iframe is not ready. Message not sent:', data);
         }
     }
 }
