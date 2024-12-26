@@ -2,9 +2,8 @@ class Hag5RendererCard extends HTMLElement {
 
     config;
     content;
-    websocket;
+    websocketServer;
 
-    // required
     setConfig(config) {
         this.config = config;
     }
@@ -29,40 +28,37 @@ class Hag5RendererCard extends HTMLElement {
             `;
             this.content = this.querySelector('#renderer-iframe');
 
-            // Start WebSocket connection
-            this.initializeWebSocket(fileName, printProgressState);
+            // Start WebSocket server
+            this.startWebSocketServer();
         }
+
+        // Send updated data to the WebSocket clients
+        this.broadcastWebSocketMessage({ fileName, progress: printProgressState });
     }
 
-    initializeWebSocket(fileName, progress) {
-        const wsUrl = `ws://${window.location.hostname}:8123/api/websocket`;
+    startWebSocketServer() {
+        this.websocketServer = new WebSocketServer({ port: 12345 }); // Port for WebSocket server
 
-        this.websocket = new WebSocket(wsUrl);
-        this.websocket.onopen = () => {
-            console.log('WebSocket connection established.');
-        };
+        this.websocketServer.on('connection', (socket) => {
+            console.log('WebSocket client connected.');
 
-        this.websocket.onmessage = (event) => {
-            console.log('WebSocket message received:', event.data);
-        };
+            socket.on('message', (message) => {
+                console.log('Received message from client:', message);
+            });
 
-        this.websocket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-
-        this.websocket.onclose = () => {
-            console.warn('WebSocket connection closed.');
-        };
-
-        // Send initial file name and progress
-        this.sendWebSocketMessage({ fileName, progress });
+            socket.on('close', () => {
+                console.log('WebSocket client disconnected.');
+            });
+        });
     }
 
-    sendWebSocketMessage(data) {
-        if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
-            this.websocket.send(JSON.stringify(data));
-        } else {
-            console.warn('WebSocket is not open. Message not sent:', data);
+    broadcastWebSocketMessage(data) {
+        if (this.websocketServer) {
+            this.websocketServer.clients.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify(data));
+                }
+            });
         }
     }
 }
