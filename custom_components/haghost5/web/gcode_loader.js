@@ -33,13 +33,9 @@ class GCodeLoader extends Loader {
     }
 
     parse(data, progressPercentage = 0) {
-        let totalSegments = 0;
         let state = { x: 0, y: 0, z: 0, e: 0, f: 0, extruding: false, relative: false };
         const layers = [];
         let currentLayer = undefined;
-
-        const pathMaterial = new LineBasicMaterial({ color: 0xFF0000 }); // Red for not printed
-        const extrudingMaterial = new LineBasicMaterial({ color: 0x00FF00 }); // Green for printed
 
         function newLayer(line) {
             currentLayer = { vertex: [], pathVertex: [], z: line.z };
@@ -50,8 +46,6 @@ class GCodeLoader extends Loader {
             if (currentLayer === undefined) {
                 newLayer(p1);
             }
-            totalSegments++;
-
             if (state.extruding) {
                 currentLayer.vertex.push(p1.x, p1.y, p1.z);
                 currentLayer.vertex.push(p2.x, p2.y, p2.z);
@@ -120,60 +114,38 @@ class GCodeLoader extends Loader {
             const geometry = new BufferGeometry();
             geometry.setAttribute('position', new Float32BufferAttribute(vertex, 3));
 
-            const completedSegments = Math.floor(vertex.length * (progressPercentage / 100));
-            const remainingSegments = vertex.length - completedSegments;
+            const totalSegments = vertex.length / 3; // Each segment has 3 coordinates (x, y, z)
+            const completedSegments = Math.floor(totalSegments * (progressPercentage / 100));
 
-            const completedMaterial = new LineBasicMaterial({ color: 0x00FF00 }); // Green for completed
-            const remainingMaterial = new LineBasicMaterial({ color: 0xFF0000 }); // Red for remaining
-
-            // Completed segments
+            // Green material for completed segments
+            const completedMaterial = new LineBasicMaterial({ color: 0x00FF00 });
             const completedGeometry = new BufferGeometry();
             completedGeometry.setAttribute(
                 'position',
                 new Float32BufferAttribute(vertex.slice(0, completedSegments * 3), 3)
             );
-            const completedSegmentsObject = new LineSegments(completedGeometry, completedMaterial);
-            object.add(completedSegmentsObject);
+            const completedObject = new LineSegments(completedGeometry, completedMaterial);
 
-            // Remaining segments
+            // Blue material for remaining segments
+            const remainingMaterial = new LineBasicMaterial({ color: 0x0000FF });
             const remainingGeometry = new BufferGeometry();
             remainingGeometry.setAttribute(
                 'position',
                 new Float32BufferAttribute(vertex.slice(completedSegments * 3), 3)
             );
-            const remainingSegmentsObject = new LineSegments(remainingGeometry, remainingMaterial);
-            object.add(remainingSegmentsObject);
+            const remainingObject = new LineSegments(remainingGeometry, remainingMaterial);
+
+            object.add(completedObject);
+            object.add(remainingObject);
         }
 
         const object = new Group();
         object.name = 'gcode';
 
-        if (this.splitLayer) {
-            for (let i = 0; i < layers.length; i++) {
-                const layer = layers[i];
-                addObject(layer.vertex, true, progressPercentage);
-                addObject(layer.pathVertex, false, progressPercentage);
-            }
-        } else {
-            const vertex = [],
-                pathVertex = [];
-
-            for (let i = 0; i < layers.length; i++) {
-                const layer = layers[i];
-                const layerVertex = layer.vertex;
-                const layerPathVertex = layer.pathVertex;
-
-                for (let j = 0; j < layerVertex.length; j++) {
-                    vertex.push(layerVertex[j]);
-                }
-
-                for (let j = 0; j < layerPathVertex.length; j++) {
-                    pathVertex.push(layerPathVertex[j]);
-                }
-            }
-
-            addObject(vertex, true, progressPercentage);
-            addObject(pathVertex, false, progressPercentage);
+        for (let i = 0; i < layers.length; i++) {
+            const layer = layers[i];
+            addObject(layer.vertex, true, progressPercentage);
+            addObject(layer.pathVertex, false, progressPercentage);
         }
 
         object.rotation.set(-Math.PI / 2, 0, 0);
