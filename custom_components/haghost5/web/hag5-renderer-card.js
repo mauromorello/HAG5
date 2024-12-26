@@ -20,20 +20,21 @@ class Hag5RendererCard extends HTMLElement {
         const filePath = `/local/community/haghost5/gcodes/${fileName}`;
 
         // Check if the file path has changed
-        if (this.currentFilePath !== filePath) {
+        if (this.currentFilePath !== filePath || !this.content) {
             this.currentFilePath = filePath;
 
             // Initialize or reinitialize the renderer with the new file
-            if (!this.content) {
-                this.innerHTML = `
-                    <ha-card header="3D Print Renderer">
-                        <div class="card-content">
-                            <div id="renderer-container" style="height: 400px; background-color: black;"></div>
+            this.innerHTML = `
+                <ha-card header="3D Print Renderer">
+                    <div class="card-content">
+                        <div style="margin-bottom: 10px; font-size: 16px; color: var(--primary-text-color);">
+                            In stampa: <b>${fileName}</b> - Completato <b>${printProgressState}%</b>
                         </div>
-                    </ha-card>
-                `;
-                this.content = this.querySelector('#renderer-container');
-            }
+                        <div id="renderer-container" style="height: 400px; background-color: black;"></div>
+                    </div>
+                </ha-card>
+            `;
+            this.content = this.querySelector('#renderer-container');
 
             this.initializeRenderer(filePath);
         }
