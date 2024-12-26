@@ -63,7 +63,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     await hass.async_add_executor_job(copy_upload_page, hass)
     await hass.async_add_executor_job(copy_visual_page, hass)
     await hass.async_add_executor_job(copy_renderer_card_page, hass)
-    await hass.async_add_executor_job(copy_gcode_loader_page, hass)
+
     
     # Nuovo percorso per la directory GCODE
     gcode_path = hass.config.path("www", "community", "haghost5", "gcodes")
@@ -196,23 +196,5 @@ def copy_renderer_card_page(hass: HomeAssistant):
     except Exception as e:
         _LOGGER.error("Error copying hag5-renderer-card.js: %s", e)
 
-def copy_gcode_loader_page(hass: HomeAssistant):
-    """
-    Copia il file 'gcode_loader.js' dalla cartella custom_components/haghost5/web/
-    in config/www/community/haghost5/gcode_loader.js,
-    in modo che sia accessibile via /local/community/haghost5/gcode_loader.js
-    """
-    src_file = hass.config.path("custom_components/haghost5/web/gcode_loader.js")
 
-    # Creiamo la cartella /www/community/haghost5/ se non esiste
-    dst_dir = hass.config.path("www", "community", "haghost5")
-    os.makedirs(dst_dir, exist_ok=True)
-
-    dst_file = os.path.join(dst_dir, "gcode_loader.js")
-
-    try:
-        shutil.copyfile(src_file, dst_file)
-        _LOGGER.info("Copied gcode_loader.js to %s", dst_file)
-    except Exception as e:
-        _LOGGER.error("Error copying gcode_loader.js: %s", e)
 
