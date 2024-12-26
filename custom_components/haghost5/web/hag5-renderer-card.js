@@ -3,6 +3,7 @@ class Hag5RendererCard extends HTMLElement {
     config;
     content;
     currentFilePath;
+    currentProgress;
 
     // required
     setConfig(config) {
@@ -27,7 +28,7 @@ class Hag5RendererCard extends HTMLElement {
             this.innerHTML = `
                 <ha-card header="3D Print Renderer">
                     <div class="card-content">
-                        <div style="margin-bottom: 10px; font-size: 16px; color: var(--primary-text-color);">
+                        <div id="status-container" style="margin-bottom: 10px; font-size: 16px; color: var(--primary-text-color);">
                             In stampa: <b>${fileName}</b> - Completato <b>${printProgressState}%</b>
                         </div>
                         <div id="renderer-container" style="height: 400px; background-color: black;"></div>
@@ -35,8 +36,19 @@ class Hag5RendererCard extends HTMLElement {
                 </ha-card>
             `;
             this.content = this.querySelector('#renderer-container');
+            this.statusContainer = this.querySelector('#status-container');
 
             this.initializeRenderer(filePath);
+        }
+
+        // Check if the progress has changed
+        if (this.currentProgress !== printProgressState) {
+            this.currentProgress = printProgressState;
+
+            // Update progress dynamically
+            if (this.statusContainer) {
+                this.statusContainer.innerHTML = `In stampa: <b>${fileName}</b> - Completato <b>${printProgressState}%</b>`;
+            }
         }
     }
 
