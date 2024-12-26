@@ -248,11 +248,8 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         _LOGGER.info("Starting polling commands to the printer.")
         while self._state == STATE_ON:
             try:
-                if self._websocket_started:
-                    commands = ["M105", "M997", "M994", "M992", "M27"]
-                    for command in commands:
-                        await self._send_command_via_ws(command)
-                        await asyncio.sleep(0.1)  # Aggiungi una breve pausa tra i comandi
+                if self._websocket_started:                   
+                    await self._send_command_via_ws("M27\nM992\nM994\nM991\nM997\n")
                 await asyncio.sleep(5)  # Aspetta 5 secondi prima di inviare di nuovo i comandi
             except Exception as e:
                 _LOGGER.error("Error during polling commands: %s", e)
