@@ -38,17 +38,33 @@ class Hag5RendererCard extends HTMLElement {
                 </ha-card>
             `;
             this.iframe = this.querySelector('#renderer-iframe');
+            
+            // Forza un aggiornamento iniziale
+            this.updateIframe({ fileName: this.currentFileName, progress: this.currentProgress });
+
         }
     }
 
     // Funzione per inviare messaggi all'iframe
     updateIframe(data) {
-        if (this.iframe && this.iframe.contentWindow) {
-            this.iframe.contentWindow.postMessage(data, '*');
-            console.log('Sent message to iframe:', data);
-        } else {
-            console.warn('Iframe not ready to receive messages.');
-        }
+        const retryInterval = 500; // Millisecondi
+        const maxRetries = 10;
+        let retries = 0;
+    
+        const sendMessage = () => {
+            if (this.iframe && this.iframe.contentWindow) {
+                console.log('Sending message to iframe:', data);
+                this.iframe.contentWindow.postMessage(data, '*');
+            } else if (retries < maxRetries) {
+                retries++;
+                console.warn('Iframe not ready. Retrying...');
+                setTimeout(sendMessage, retryInterval);
+            } else {
+                console.error('Failed to send message to iframe after retries:', data);
+            }
+        };
+    
+        sendMessage();
     }
 }
 
