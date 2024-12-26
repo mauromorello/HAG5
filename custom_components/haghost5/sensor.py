@@ -175,13 +175,6 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                         return
         except Exception as e:
             _LOGGER.warning("Error checking printer status: %s", e)
-            # Set all associated sensors to unavailable
-            self._m997_sensor = "unavailable"
-            self._m27_sensor = "unavailable"
-            self._m994_sensor = "unavailable"
-            self._m992_sensor = "unavailable"
-            self._tbed_sensor = "unavailable"
-            self._tnozzle_sensor = "unavailable"
     
         if self._state != STATE_OFF:
             _LOGGER.info("Printer is offline.")
