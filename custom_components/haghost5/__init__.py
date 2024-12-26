@@ -123,8 +123,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     
     _LOGGER.debug("Fine registrazione della card hag5_gcode_card.")
 
-
-    
     return True
 
 
