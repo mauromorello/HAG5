@@ -174,7 +174,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                             asyncio.create_task(self._start_websocket())
                         return
         except Exception as e:
-            _LOGGER.warning"Error checking printer status: %s", e)
+            _LOGGER.warning("Error checking printer status: %s", e)
             # Set all associated sensors to unavailable
             self._m997_sensor = "unavailable"
             self._m27_sensor = "unavailable"
