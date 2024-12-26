@@ -1,5 +1,13 @@
-import { Loader, FileLoader, LineBasicMaterial, Float32BufferAttribute, Group, LineSegments } from 'three';
+const { Loader, FileLoader, LineBasicMaterial, Float32BufferAttribute, Group, LineSegments } = THREE;
 
+/**
+ * GCodeLoader is used to load gcode files usually used for 3D printing or CNC applications.
+ *
+ * Gcode files are composed by commands used by machines to create objects.
+ *
+ * @class GCodeLoader
+ * @param {Manager} manager Loading manager.
+ */
 class GCodeLoader extends Loader {
 
     constructor(manager) {
@@ -9,33 +17,38 @@ class GCodeLoader extends Loader {
 
     load(url, onLoad, onProgress, onError) {
         const scope = this;
+
         const loader = new FileLoader(scope.manager);
         loader.setPath(scope.path);
         loader.setRequestHeader(scope.requestHeader);
         loader.setWithCredentials(scope.withCredentials);
-        loader.load(
-            url,
-            function (text) {
-                try {
-                    onLoad(scope.parse(text));
-                } catch (e) {
-                    if (onError) {
-                        onError(e);
-                    } else {
-                        console.error(e);
-                    }
-                    scope.manager.itemError(url);
+        loader.load(url, function (text) {
+
+            try {
+                onLoad(scope.parse(text));
+            } catch (e) {
+                if (onError) {
+                    onError(e);
+                } else {
+                    console.error(e);
                 }
-            },
-            onProgress,
-            onError
-        );
+                scope.manager.itemError(url);
+            }
+
+        }, onProgress, onError);
     }
 
-    parse(data, progressPercentage = 0) {
+    parse(data) {
         let state = { x: 0, y: 0, z: 0, e: 0, f: 0, extruding: false, relative: false };
         const layers = [];
+
         let currentLayer = undefined;
+
+        const pathMaterial = new LineBasicMaterial({ color: 0xFF0000 });
+        pathMaterial.name = 'path';
+
+        const extrudingMaterial = new LineBasicMaterial({ color: 0x00FF00 });
+        extrudingMaterial.name = 'extruded';
 
         function newLayer(line) {
             currentLayer = { vertex: [], pathVertex: [], z: line.z };
@@ -46,6 +59,7 @@ class GCodeLoader extends Loader {
             if (currentLayer === undefined) {
                 newLayer(p1);
             }
+
             if (state.extruding) {
                 currentLayer.vertex.push(p1.x, p1.y, p1.z);
                 currentLayer.vertex.push(p2.x, p2.y, p2.z);
@@ -97,6 +111,7 @@ class GCodeLoader extends Loader {
 
                 addSegment(state, line);
                 state = line;
+
             } else if (cmd === 'G90') {
                 state.relative = false;
             } else if (cmd === 'G91') {
@@ -110,46 +125,35 @@ class GCodeLoader extends Loader {
             }
         }
 
-        function addObject(vertex, extruding, progressPercentage) {
+        function addObject(vertex, extruding, i) {
             const geometry = new BufferGeometry();
             geometry.setAttribute('position', new Float32BufferAttribute(vertex, 3));
-
-            const totalSegments = vertex.length / 3; // Each segment has 3 coordinates (x, y, z)
-            const completedSegments = Math.floor(totalSegments * (progressPercentage / 100));
-
-            // Green material for completed segments
-            const completedMaterial = new LineBasicMaterial({ color: 0x00FF00 });
-            const completedGeometry = new BufferGeometry();
-            completedGeometry.setAttribute(
-                'position',
-                new Float32BufferAttribute(vertex.slice(0, completedSegments * 3), 3)
-            );
-            const completedObject = new LineSegments(completedGeometry, completedMaterial);
-
-            // Blue material for remaining segments
-            const remainingMaterial = new LineBasicMaterial({ color: 0x0000FF });
-            const remainingGeometry = new BufferGeometry();
-            remainingGeometry.setAttribute(
-                'position',
-                new Float32BufferAttribute(vertex.slice(completedSegments * 3), 3)
-            );
-            const remainingObject = new LineSegments(remainingGeometry, remainingMaterial);
-
-            object.add(completedObject);
-            object.add(remainingObject);
+            const segments = new LineSegments(geometry, extruding ? extrudingMaterial : pathMaterial);
+            segments.name = 'layer' + i;
+            object.add(segments);
         }
 
         const object = new Group();
         object.name = 'gcode';
 
-        for (let i = 0; i < layers.length; i++) {
-            const layer = layers[i];
-            addObject(layer.vertex, true, progressPercentage);
-            addObject(layer.pathVertex, false, progressPercentage);
+        if (this.splitLayer) {
+            for (let i = 0; i < layers.length; i++) {
+                const layer = layers[i];
+                addObject(layer.vertex, true, i);
+                addObject(layer.pathVertex, false, i);
+            }
+        } else {
+            const vertex = [], pathVertex = [];
+            for (let i = 0; i < layers.length; i++) {
+                const layer = layers[i];
+                vertex.push(...layer.vertex);
+                pathVertex.push(...layer.pathVertex);
+            }
+            addObject(vertex, true, layers.length);
+            addObject(pathVertex, false, layers.length);
         }
 
         object.rotation.set(-Math.PI / 2, 0, 0);
-
         return object;
     }
 }
