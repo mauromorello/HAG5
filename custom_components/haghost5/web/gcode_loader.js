@@ -1,3 +1,5 @@
+import { Loader, FileLoader, LineBasicMaterial, Float32BufferAttribute, Group, LineSegments } from 'three';
+
 class GCodeLoader extends Loader {
 
     constructor(manager) {
