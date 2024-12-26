@@ -34,11 +34,19 @@ class Hag5RendererCard extends HTMLElement {
 
     sendMessageToIframe(data) {
         if (this.content) {
-            this.content.contentWindow.postMessage(data, '*');
+            this.content.addEventListener('load', () => {
+                if (this.content.contentWindow) {
+                    this.content.contentWindow.postMessage(data, '*');
+                    console.log('Message sent to iframe:', data);
+                } else {
+                    console.warn('Iframe content window is not accessible.');
+                }
+            });
         } else {
             console.warn('Iframe is not ready. Message not sent:', data);
         }
     }
-}
+    
+    }
 
 customElements.define('hag5-renderer-card', Hag5RendererCard);
