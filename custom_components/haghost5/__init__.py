@@ -18,6 +18,11 @@ from .api import HAG5GetGcodeFile
 
 _LOGGER = logging.getLogger(__name__)
 
+def generate_random_token(length=8):
+    """Genera un token random alfanumerico."""
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
 # Imposta l'endpoint e la cartella (in config) dove salveremo i file caricati
 UPLOAD_DIR_NAME = "www/community/haghost5/gcodes"
 
@@ -117,6 +122,32 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     _LOGGER.debug("Fine registrazione della card hag5_gcode_card.")
 
 
+    # Genera un token random per forzare l'aggiornamento
+    random_token = generate_random_token()
+    resource_url = f"/local/community/haghost5/hag5-renderer-card/hag5-renderer-card.js?{random_token}"
+
+    # Controlla se la risorsa è già presente
+    frontend_resources = await hass.helpers.frontend.async_get_panel_resources()
+    if not any(resource_url.split('?')[0] in resource["url"] for resource in frontend_resources):
+        # Aggiungi la risorsa
+        try:
+            await hass.services.async_call(
+                "frontend", "reload_themes", {}
+            )  # Per assicurarsi che la UI sia aggiornata
+
+            await hass.services.async_call(
+                "frontend",
+                "set_resource",
+                {
+                    "url": resource_url,
+                    "res_type": "module",
+                },
+            )
+            _LOGGER.info("Custom card resource added with random token: %s", resource_url)
+        except Exception as e:
+            _LOGGER.error("Failed to add custom card resource: %s", e)
+
+    
     return True
 
 
