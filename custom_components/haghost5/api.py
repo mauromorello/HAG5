@@ -42,15 +42,18 @@ class GCodeUploadAndPrintView(HomeAssistantView):
         _LOGGER.info("Received file for upload_and_print: %s", filename)
 
         # Salvo localmente
-        gcodes_dir = hass.config.path("gcodes")
-        os.makedirs(gcodes_dir, exist_ok=True)
+        # Salvo localmente nella directory corretta
+        gcodes_dir = hass.config.path("www", "community", "haghost5", "gcodes")
+        os.makedirs(gcodes_dir, exist_ok=True)  # Crea la directory se non esiste
+        
         save_path = os.path.join(gcodes_dir, filename)
         try:
             def _write_file(path, data):
                 with open(path, "wb") as f:
                     f.write(data)
-            
+        
             await hass.async_add_executor_job(_write_file, save_path, file_bytes)
+            _LOGGER.info("File saved successfully to %s", save_path)
         except Exception as e:
             _LOGGER.error("Error saving file: %s", e)
             return web.Response(text=f"Error saving file: {e}", status=500)
