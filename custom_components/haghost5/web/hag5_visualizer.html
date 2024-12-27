@@ -149,7 +149,7 @@ render();
 // Inizializza la scena
 function init() {
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.set(0, 0, 100);
+    camera.position.set(0, 0, 70);
 
     scene = new THREE.Scene();
 
@@ -185,54 +185,51 @@ function updateScene(layers, progressPercentage) {
 
     gcodeObject = new THREE.Group();
 
-    const totalSegments = layers.reduce((sum, layer) => sum + layer.vertex.length / 6, 0); // Numero totale di segmenti
-    let completedSegments = Math.floor(totalSegments * (progressPercentage / 100));
-    let segmentIndex = 0;
+    // Calcola il numero di layer completati in base alla percentuale di progresso
+    const totalLayers = layers.length;
+    const completedLayers = Math.floor(totalLayers * (progressPercentage / 100));
 
-layers.forEach(layer => {
-    const geometry = new THREE.BufferGeometry();
-    const vertices = layer.vertex;
-    const colors = [];
+    layers.forEach((layer, index) => {
+        const geometry = new THREE.BufferGeometry();
+        const vertices = layer.vertex;
 
-    const hotSegments = 20; // Numero di segmenti "caldi" (sfumati)
-    const coldStart = completedSegments - hotSegments; // Inizia a sfumare
-
-    for (let i = 0; i < vertices.length; i += 6) {
+        // Determina il colore per il layer in base al progresso
         let color;
-    
-        if (segmentIndex < completedSegments) {
-            if (segmentIndex >= coldStart && segmentIndex < completedSegments) {
-                // Calcola il colore sfumato
-                const ratio = (segmentIndex - coldStart) / hotSegments;
-                color = new THREE.Color(1, ratio, 0); // Rosso → arancio → giallo → verde
-            } else {
-                color = new THREE.Color(0, 1, 0); // Verde (freddo)
-            }
+        if (index === completedLayers - 1) {
+            color = new THREE.Color(1, 0, 0); // Rosso (layer corrente)
+        } else if (index === completedLayers - 2) {
+            color = new THREE.Color(1, 0.5, 0); // Arancione (penultimo layer)
+        } else if (index === completedLayers - 3) {
+            color = new THREE.Color(1, 1, 0); // Giallo (terzultimo layer)
+        } else if (index < completedLayers) {
+            color = new THREE.Color(0, 1, 0); // Verde (layer completati)
         } else {
-            color = new THREE.Color(0, 0, 1); // Blu (non ancora stampato)
+            color = new THREE.Color(0, 0, 1); // Blu (layer non completati)
         }
-    
-        // Aggiungi i colori per il segmento corrente
-        colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
-        segmentIndex++;
-    }
 
+        // Applica il colore al layer
+        const colors = [];
+        for (let i = 0; i < vertices.length; i += 3) {
+            colors.push(color.r, color.g, color.b);
+        }
 
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        // Associa i colori e la geometria
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
-    const material = new THREE.LineBasicMaterial({ vertexColors: true });
-    const line = new THREE.LineSegments(geometry, material);
-    gcodeObject.add(line);
-});
+        const material = new THREE.LineBasicMaterial({ vertexColors: true });
+        const line = new THREE.LineSegments(geometry, material);
+        gcodeObject.add(line);
+    });
 
-
-    // Aggiungi la posizione prima di aggiungere l'oggetto alla scena
-    gcodeObject.position.set(-100, -20, 100);
-    
+    // Aggiungi la posizione e l'oggetto alla scena
+    gcodeObject.position.set(-100, -100, 20);
     scene.add(gcodeObject);
     render();
 }
+
+
+
 
 // Aggiorna la percentuale di progresso senza ricaricare il file
 function updateProgress(newProgressPercentage) {
