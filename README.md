@@ -13,7 +13,7 @@ HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant
   - Printer status (idle, printing, error).
   - Remaining time for print completion.
  
-
+![3D Print Visualization](images/img2.jpeg "Add HA sensors")
 
 
 
@@ -22,13 +22,14 @@ HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant
 - Visualize the G-code layer by layer in 3D as the print progresses.
 
 Experience live G-code visualization during a print:
+
 ![3D Print Visualization](images/img1.jpeg "3D Print Visualization in Action")
 
 
 ### 3. **G-code Upload**
 - A web-based card provides an easy way to upload G-code files directly to the printer.
 - The uploaded files can be visualized in 3D through the integrated custom card.
-![3D Print Visualization](images/img2.jpeg "Add HA sensors")
+
 ---
 
 ## Installation
