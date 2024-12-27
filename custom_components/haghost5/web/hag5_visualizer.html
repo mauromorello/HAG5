@@ -208,6 +208,9 @@ function updateScene(layers, progressPercentage) {
         gcodeObject.add(line);
     });
 
+    // Aggiungi la posizione prima di aggiungere l'oggetto alla scena
+    gcodeObject.position.set(-100, -20, 100);
+    
     scene.add(gcodeObject);
     render();
 }
