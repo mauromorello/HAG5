@@ -22,7 +22,7 @@ HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant
 - Visualize the G-code layer by layer in 3D as the print progresses.
 
 Experience live G-code visualization during a print:
-![3D Print Visualization](img1.jpeg "3D Print Visualization in Action")
+![3D Print Visualization](images/img1.jpeg "3D Print Visualization in Action")
 
 
 ### 3. **G-code Upload**
