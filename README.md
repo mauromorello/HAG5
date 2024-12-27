@@ -12,10 +12,18 @@ HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant
   - Temperature of the hotend and bed.
   - Printer status (idle, printing, error).
   - Remaining time for print completion.
+ 
+
+
+
 
 ### 2. **3D Print Visualization**
 - Includes a **custom card** that uses [Three.js](https://threejs.org/) to provide a live visualization of the ongoing print.
 - Visualize the G-code layer by layer in 3D as the print progresses.
+
+Experience live G-code visualization during a print:
+![3D Print Visualization](images/ "3D Print Visualization in Action")
+
 
 ### 3. **G-code Upload**
 - A web-based card provides an easy way to upload G-code files directly to the printer.
