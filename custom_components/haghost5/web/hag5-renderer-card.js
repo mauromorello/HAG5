@@ -16,17 +16,15 @@ class Hag5RendererCard extends HTMLElement {
         const printingFileNameState = hass.states[printingFileNameEntity]?.state || 'unavailable';
         const printProgressState = hass.states[printProgressEntity]?.state || '0';
 
-        // Aggiorna il file in stampa se è cambiato
-        if (this.currentFileName !== printingFileNameState) {
-            this.currentFileName = printingFileNameState;
-            this.updateIframe({ fileName: this.currentFileName, progress: printProgressState });
-        }
-
-        // Aggiorna la percentuale se è cambiata
+        // Aggiorna il file e la percentuale insieme ogni volta che cambia la percentuale
         if (this.currentProgress !== printProgressState) {
+            this.currentFileName = printingFileNameState;
             this.currentProgress = printProgressState;
-            this.updateIframe({ progress: this.currentProgress });
+    
+            // Invia il nome del file e la percentuale insieme
+            this.updateIframe({ fileName: this.currentFileName, progress: this.currentProgress });
         }
+        
 
         // Crea il contenuto della card solo se non esiste
         if (!this.iframe) {
