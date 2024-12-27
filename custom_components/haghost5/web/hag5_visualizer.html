@@ -135,10 +135,13 @@ class GCodeLoader extends THREE.Loader {
     }
 }
 
+
 let camera, scene, renderer;
 let gcodeObject = null; // Salva il modello caricato
 let progressPercentage = 0; // Percentuale completata
+let currentFileName = null; // Nome del file corrente, inizialmente null
 const statusDiv = document.getElementById('status');
+    
 
 init();
 render();
@@ -251,11 +254,16 @@ function render() {
 
 window.addEventListener('message', (event) => {
     const data = event.data;
+    
+    // Verifica se il file o il progresso è cambiato
     if (data.fileName && data.fileName !== currentFileName) {
-        loadGCode(data.fileName, data.progress || 0);
+        currentFileName = data.fileName; // Aggiorna il file corrente
+        loadGCode(currentFileName, data.progress || 0);
     } else if (data.progress !== undefined) {
-        updateProgress(data.progress);
+        updateProgress(data.progress); // Aggiorna solo il progresso
     }
+
+    // Aggiorna la barra di stato
     statusDiv.textContent = `In stampa: ${data.fileName || 'N/A'} - Completato: ${progressPercentage}%`;
 });
 </script>
