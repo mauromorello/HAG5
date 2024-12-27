@@ -112,6 +112,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._m992_sensor = None
         self._tbed_sensor = None
         self._tnozzle_sensor = None
+        self._idle_state = False  # Indica se la stampante è in stato IDLE
 
     def attach_m997_sensor(self, m997_sensor):
         """Collega il sensore M997 al sensore online."""
@@ -136,7 +137,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     def attach_tnozzle_sensor(self, tnozzle_sensor):
         """Collega il sensore tnozzle al sensore online."""
         self._tnozzle_sensor = tnozzle_sensor    
-        
+
     @property
     def name(self):
         return "Status printer"
@@ -171,6 +172,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                         if self._state != STATE_ON:
                             _LOGGER.info("Printer is online. Starting WebSocket...")
                             self._state = STATE_ON
+                            self._idle_state = False
                             asyncio.create_task(self._start_websocket())
                         return
         except Exception as e:
@@ -179,7 +181,45 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         if self._state != STATE_OFF:
             _LOGGER.info("Printer is offline.")
             self._state = STATE_OFF
-            
+            self._reset_all_sensors()
+
+    def set_idle_state(self, is_idle: bool):
+        """Set the printer's idle state and update sensors accordingly."""
+        self._idle_state = is_idle
+        if is_idle:
+            _LOGGER.info("Printer is in IDLE state. Updating sensors...")
+            self._reset_non_temperature_sensors()
+        else:
+            _LOGGER.info("Printer is active. Restoring sensor updates...")
+
+    def _reset_all_sensors(self):
+        """Reset all sensors to 0."""
+        if self._m997_sensor:
+            self._m997_sensor.reset()
+        if self._m27_sensor:
+            self._m27_sensor.reset()
+        if self._m994_sensor:
+            self._m994_sensor.reset()
+        if self._m992_sensor:
+            self._m992_sensor.reset()
+        if self._tbed_sensor:
+            self._tbed_sensor.reset()
+        if self._tnozzle_sensor:
+            self._tnozzle_sensor.reset()
+        _LOGGER.info("All sensors have been reset to 0 due to printer being offline.")
+
+    def _reset_non_temperature_sensors(self):
+        """Reset all sensors except temperature sensors."""
+        if self._m997_sensor:
+            self._m997_sensor.reset()
+        if self._m27_sensor:
+            self._m27_sensor.reset()
+        if self._m994_sensor:
+            self._m994_sensor.reset()
+        if self._m992_sensor:
+            self._m992_sensor.reset()
+        _LOGGER.info("Non-temperature sensors have been reset to 0 due to printer being in IDLE state.")
+
     def send_ws_command(self, command: str):
         """Send a command over the WebSocket."""
         if not self._websocket_started:
@@ -218,9 +258,12 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                     async with session.ws_connect(ws_url) as ws:
                         async for msg in ws:
                             if msg.type == WSMsgType.TEXT:
-                                #_LOGGER.debug("WebSocket message received: %s", msg.data)
-    
-                                # Pass the message to the M997 and M27 sensors for processing
+                                # Process WebSocket messages and update state
+                                if "IDLE" in msg.data:
+                                    self.set_idle_state(True)
+                                else:
+                                    self.set_idle_state(False)
+
                                 if self._m997_sensor:
                                     await self._m997_sensor.process_message(msg.data)
                                 if self._m27_sensor:
