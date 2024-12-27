@@ -75,8 +75,8 @@ class GCodeUploadAndPrintView(HomeAssistantView):
                             sensor_ref = self._get_sensor_ref(hass)
                             if sensor_ref:
                                 try:
-                                    sensor_ref.send_ws_command("M20 1:")
-                                    sensor_ref.send_ws_command(f"M23 {filename} \nM24")
+                                    sensor_ref.send_ws_command("M20 1:\n")
+                                    sensor_ref.send_ws_command(f"M23 {filename}\nM24\n\n\n")
                                     _LOGGER.info("Sent M23 %s and M24 via WebSocket.", filename)
                                 except Exception as e:
                                     _LOGGER.error("Error sending WS commands: %s", e)
