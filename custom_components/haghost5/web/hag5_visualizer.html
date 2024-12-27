@@ -199,27 +199,24 @@ layers.forEach(layer => {
 
     for (let i = 0; i < vertices.length; i += 6) {
         let color;
-
+    
         if (segmentIndex < completedSegments) {
             if (segmentIndex >= coldStart && segmentIndex < completedSegments) {
                 // Calcola il colore sfumato
                 const ratio = (segmentIndex - coldStart) / hotSegments;
-                color = new THREE.Color(
-                    1, // Rosso
-                    ratio, // Passa gradualmente a verde
-                    0 // Niente blu
-                );
+                color = new THREE.Color(1, ratio, 0); // Rosso → arancio → giallo → verde
             } else {
-                color = new THREE.Color(0x00FF00); // Verde (freddo)
+                color = new THREE.Color(0, 1, 0); // Verde (freddo)
             }
         } else {
-            color = new THREE.Color(0x0000FF); // Blu (non ancora stampato)
+            color = new THREE.Color(0, 0, 1); // Blu (non ancora stampato)
         }
-
+    
         // Aggiungi i colori per il segmento corrente
         colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
         segmentIndex++;
     }
+
 
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
@@ -256,19 +253,19 @@ gcodeObject.children.forEach(line => {
 
     for (let i = 0; i < colors.length; i += 6) {
         let color;
-
+    
         if (segmentIndex < completedSegments) {
             if (segmentIndex >= coldStart && segmentIndex < completedSegments) {
                 // Calcola il colore sfumato
                 const ratio = (segmentIndex - coldStart) / hotSegments;
-                color = [1, ratio, 0]; // Rosso → giallo → verde
+                color = [1, ratio, 0]; // Rosso → arancio → giallo → verde
             } else {
                 color = [0, 1, 0]; // Verde (freddo)
             }
         } else {
             color = [0, 0, 1]; // Blu (non ancora stampato)
         }
-
+    
         // Aggiorna i colori per il segmento corrente
         colors[i] = color[0];
         colors[i + 1] = color[1];
@@ -278,6 +275,7 @@ gcodeObject.children.forEach(line => {
         colors[i + 5] = color[2];
         segmentIndex++;
     }
+
 
     line.geometry.attributes.color.needsUpdate = true;
 });
