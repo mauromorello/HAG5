@@ -307,6 +307,11 @@ class PrinterM997Sensor(HAGhost5BaseSensor):
         super().__init__(ip_address, "printer_m997_status")
         self._state = None
 
+    def reset(self):
+        """Reimposta il sensore allo stato iniziale."""
+        self._state = 0
+        _LOGGER.info("PrinterM997Sensor reset to 0.")
+
     @property
     def name(self):
         return "Operation"
