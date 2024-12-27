@@ -4,6 +4,12 @@ HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant
 
 ---
 
+## Disclaimer
+
+The project is currently in **beta** and is under active testing. Users are advised to use it at their own risk. The author does not take responsibility for any potential issues, including but not limited to malfunctioning of the printer, Home Assistant, or any related systems.
+
+---
+
 ## Features
 
 ### 1. **Printer Monitoring**
@@ -15,8 +21,6 @@ HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant
  
 ![3D Print Visualization](images/img2.jpeg "Add HA sensors")
 
-
-
 ### 2. **3D Print Visualization**
 - Includes a **custom card** that uses [Three.js](https://threejs.org/) to provide a live visualization of the ongoing print.
 - Visualize the G-code layer by layer in 3D as the print progresses.
@@ -24,7 +28,6 @@ HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant
 Experience live G-code visualization during a print:
 
 ![3D Print Visualization](images/img1.jpeg "3D Print Visualization in Action")
-
 
 ### 3. **G-code Upload**
 - A web-based card provides an easy way to upload G-code files directly to the printer.
@@ -53,7 +56,16 @@ Experience live G-code visualization during a print:
 - Search for "HAGhost5" and follow the on-screen instructions.
 
 ### 2. Enable the Custom Card
-- Add the custom card to your Lovelace dashboard using the YAML configuration provided in the `custom_card` folder.
+- It is necessary to include the following line in **Settings** → **Dashboards** → **Resources**:
+  ```
+  /local/community/haghost5/hag5-renderer-card/hag5-renderer-card.js
+  ```
+
+### 3. Configure the Uploader Card
+- To enable the file uploader, add a "Web" card to your dashboard and set its URL to:
+  ```
+  /local/community/haghost5/hag5_upload.html
+  ```
 
 ---
 
