@@ -28,7 +28,7 @@ Experience live G-code visualization during a print:
 ### 3. **G-code Upload**
 - A web-based card provides an easy way to upload G-code files directly to the printer.
 - The uploaded files can be visualized in 3D through the integrated custom card.
-
+![3D Print Visualization](images/img2.jpeg "Add HA sensors")
 ---
 
 ## Installation
