@@ -75,7 +75,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     tnozzle_sensor = TNozzleSensor(ip_address)
     tbed_sensor = TBedSensor(ip_address)
 
-    online_sensor = PrinterStatusSensor(ip_address)
+    online_sensor = PrinterStatusSensor(ip_address, hass)
     hass.data[DOMAIN]["printer_status_sensor"] = online_sensor
     #async_add_entities([online_sensor]) 
     
