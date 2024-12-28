@@ -267,8 +267,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                                     
                                 _LOGGER.debug("WebSocket message received: %s", msg.data.encode("utf-8"))
 
-                                # Process file list messages
-                                if "Begin file list" in msg.data or msg.data.endswith(".gcode") or "End file list" in msg.data:
+                                if re.search(r"Begin file list|\.gcode\s*$|End file list", msg.data):
                                     await self.process_file_list_message(msg.data)
 
                                 if self._m997_sensor:
