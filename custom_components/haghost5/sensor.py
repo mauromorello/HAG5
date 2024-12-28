@@ -365,6 +365,11 @@ class PrinterM27Sensor(HAGhost5BaseSensor):
         super().__init__(ip_address, "printer_m27_status")
         self._state = None
 
+    def reset(self):
+        """Reimposta il sensore allo stato iniziale."""
+        self._state = 0
+        _LOGGER.info("PrinterM997Sensor reset to 0.")
+    
     @property
     def name(self):
         return "Print Progress"
@@ -446,6 +451,11 @@ class PrinterM994Sensor(HAGhost5BaseSensor):
         self._state = None
         self._attributes = {}
 
+    def reset(self):
+        """Reimposta il sensore allo stato iniziale."""
+        self._state = 0
+        _LOGGER.info("PrinterM997Sensor reset to 0.")    
+    
     @property
     def name(self):
         """Nome visualizzato nel frontend di Home Assistant."""
@@ -554,11 +564,12 @@ class PrinterM992Sensor(HAGhost5BaseSensor):
     @property
     def name(self):
         return "Elapsed Print Time"
-    """
-    @property
-    def device_class(self):
-        return SensorDeviceClass.DURATION  # indica a HA che è un sensore di durata
-    """
+
+    def reset(self):
+        """Reimposta il sensore allo stato iniziale."""
+        self._state = 0
+        _LOGGER.info("PrinterM997Sensor reset to 0.")    
+    
     @property
     def native_value(self):
         """
