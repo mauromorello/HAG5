@@ -2,6 +2,7 @@ import logging
 import re
 import os
 import asyncio
+import json
 
 from aiohttp import ClientSession, WSMsgType
 from datetime import datetime, timedelta
@@ -345,17 +346,25 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
             _LOGGER.warning("File list processing timed out. Saved incomplete list.")
         self._file_list = []  # Reset della lista
 
-    def save_gcode_file_list(self, file_list):
+    async def save_gcode_file_list(self, file_list):
         """Salva l'elenco dei file in un file JSON."""
         files_dir = os.path.join("www", "community", "haghost5")
         json_path = os.path.join(files_dir, "files.json")
+        
         try:
             os.makedirs(files_dir, exist_ok=True)
-            with open(json_path, "w") as json_file:
-                json.dump(file_list, json_file)
+            
+            # Usa hass.async_add_executor_job per evitare di bloccare l'evento principale
+            await hass.async_add_executor_job(self._write_json_file, json_path, file_list)
             _LOGGER.info("File list saved to %s", json_path)
         except Exception as e:
             _LOGGER.error("Failed to save file list to JSON: %s", e)
+    
+    def _write_json_file(self, path, data):
+        """Scrive il JSON in modo sincrono (da usare con async_add_executor_job)."""
+        with open(path, "w") as json_file:
+            json.dump(data, json_file)
+
 
 
 class PrinterM997Sensor(HAGhost5BaseSensor):
