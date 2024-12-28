@@ -308,7 +308,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                 break
         _LOGGER.info("Polling commands stopped because the printer is offline.")
 
-    def process_file_list_message(self, message):
+    async def process_file_list_message(self, message):
         """Elabora i messaggi della lista file e gestisce timeout per completare la lista."""
         if not hasattr(self, '_file_list'):
             self._file_list = []
