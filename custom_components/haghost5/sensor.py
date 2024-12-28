@@ -320,9 +320,13 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                 self._file_list_timer = None
             _LOGGER.info("Started processing file list.")
 
-        elif message.endswith(".gcode"):
-            self._file_list.append(message.strip())
-            _LOGGER.info("Added file to list: %s", message.strip())
+        elif re.search(r"\.gcode\s*$", message):
+            clean_message = message.strip()
+            self._file_list.append(clean_message)
+            _LOGGER.info("Added file to list (via RegEx): %s", clean_message)
+        else:
+            _LOGGER.debug("Message does NOT match '.gcode' pattern: %s", message)
+
 
         elif message.startswith("End file list"):
             if self._file_list_timer:
