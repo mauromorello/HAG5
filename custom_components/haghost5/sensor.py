@@ -115,6 +115,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._tbed_sensor = None
         self._tnozzle_sensor = None
         self._idle_state = False  # Indica se la stampante è in stato IDLE
+        self.hass = hass  # Memorizza il contesto 'hass'
 
     def attach_m997_sensor(self, m997_sensor):
         """Collega il sensore M997 al sensore online."""
@@ -329,7 +330,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
             if self._file_list_timer:
                 self._file_list_timer.cancel()
                 self._file_list_timer = None
-            await self.save_gcode_file_list(self._file_list)
+            await self.save_gcode_file_list(self._file_list)  # Chiamata senza passare 'hass'
             self._file_list = []  # Reset della lista
             _LOGGER.info("Completed processing file list.")
 
@@ -347,23 +348,15 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._file_list = []  # Reset della lista
 
     async def save_gcode_file_list(self, file_list):
-        """Salva l'elenco dei file in un file JSON."""
-        files_dir = os.path.join("www", "community", "haghost5")
-        json_path = os.path.join(files_dir, "files.json")
-        
+        """Salva la lista dei file in un file JSON."""
+        json_path = self.hass.config.path("www", "community", "haghost5", "files.json")
         try:
-            os.makedirs(files_dir, exist_ok=True)
-            
-            # Usa hass.async_add_executor_job per evitare di bloccare l'evento principale
-            await hass.async_add_executor_job(self._write_json_file, json_path, file_list)
-            _LOGGER.info("File list saved to %s", json_path)
+            async with aiofiles.open(json_path, "w") as json_file:
+                await json_file.write(json.dumps(file_list, indent=4))
+            _LOGGER.info("File list saved to JSON at: %s", json_path)
         except Exception as e:
             _LOGGER.error("Failed to save file list to JSON: %s", e)
-    
-    def _write_json_file(self, path, data):
-        """Scrive il JSON in modo sincrono (da usare con async_add_executor_job)."""
-        with open(path, "w") as json_file:
-            json.dump(data, json_file)
+
 
 
 
