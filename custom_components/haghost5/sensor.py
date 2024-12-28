@@ -270,7 +270,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
 
                                 # Process file list messages
                                 if "Begin file list" in msg.data or msg.data.endswith(".gcode") or "End file list" in msg.data:
-                                    self.process_file_list_message(msg.data)
+                                    await self.process_file_list_message(msg.data)
 
                                 if self._m997_sensor:
                                     await self._m997_sensor.process_message(msg.data)
