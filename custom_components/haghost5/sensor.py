@@ -101,7 +101,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     """Sensor to represent the printer's online/offline status."""
 
     def __init__(self, ip_address, hass):
-        super().__init__(ip_address, "printer_online_status")
+        super().__init__(ip_address, "printer_online_status")  # Passa ip_address e il nome del sensore
         self._state = STATE_OFF
         self._last_message_time = None
         self._websocket_started = False
