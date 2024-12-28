@@ -3,6 +3,7 @@ import re
 import os
 import asyncio
 import json
+import aiofiles
 
 from aiohttp import ClientSession, WSMsgType
 from datetime import datetime, timedelta
