@@ -100,7 +100,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class PrinterStatusSensor(HAGhost5BaseSensor):
     """Sensor to represent the printer's online/offline status."""
 
-    def __init__(self, ip_address):
+    def __init__(self, ip_address, hass):
         super().__init__(ip_address, "printer_online_status")
         self._state = STATE_OFF
         self._last_message_time = None
