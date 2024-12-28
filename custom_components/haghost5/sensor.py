@@ -329,7 +329,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
             if self._file_list_timer:
                 self._file_list_timer.cancel()
                 self._file_list_timer = None
-            self.save_gcode_file_list(self._file_list)
+            await self.save_gcode_file_list(self._file_list)
             self._file_list = []  # Reset della lista
             _LOGGER.info("Completed processing file list.")
 
