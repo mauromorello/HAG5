@@ -265,8 +265,8 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                                 else:
                                     self.set_idle_state(False)
                                     
-                                _LOGGER.debug("WebSocket message received: %s", msg.data)
-                                
+                                _LOGGER.debug("WebSocket message received: %s", msg.data.encode("utf-8"))
+
                                 # Process file list messages
                                 if "Begin file list" in msg.data or msg.data.endswith(".gcode") or "End file list" in msg.data:
                                     self.process_file_list_message(msg.data)
