@@ -176,7 +176,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                             asyncio.create_task(self._start_websocket())
                         return
         except Exception as e:
-            _LOGGER.warning("Error checking printer status: %s", e)
+            _LOGGER.debug("Error checking printer status: %s", e)
     
         if self._state != STATE_OFF:
             _LOGGER.info("Printer is offline.")
