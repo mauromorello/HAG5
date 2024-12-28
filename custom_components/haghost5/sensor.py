@@ -264,6 +264,10 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                                 else:
                                     self.set_idle_state(False)
 
+                                # Process file list messages
+                                if "Begin file list" in msg.data or msg.data.endswith(".gcode") or "End file list" in msg.data:
+                                    self.process_file_list_message(msg.data)
+
                                 if self._m997_sensor:
                                     await self._m997_sensor.process_message(msg.data)
                                 if self._m27_sensor:
@@ -280,6 +284,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                             elif msg.type in {WSMsgType.CLOSED, WSMsgType.ERROR}:
                                 _LOGGER.warning("WebSocket closed or error.")
                                 break
+
             except Exception as e:
                 _LOGGER.error("WebSocket error: %s", e)
                 await asyncio.sleep(5)  # Retry connection
@@ -298,6 +303,56 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                 _LOGGER.error("Error during polling commands: %s", e)
                 break
         _LOGGER.info("Polling commands stopped because the printer is offline.")
+
+    def process_file_list_message(self, message):
+        """Elabora i messaggi della lista file e gestisce timeout per completare la lista."""
+        if not hasattr(self, '_file_list'):
+            self._file_list = []
+            self._file_list_timer = None
+
+        if message.startswith("Begin file list"):
+            self._file_list = []  # Inizializza una nuova lista
+            if self._file_list_timer:
+                self._file_list_timer.cancel()
+                self._file_list_timer = None
+            _LOGGER.info("Started processing file list.")
+
+        elif message.endswith(".gcode"):
+            self._file_list.append(message.strip())
+            _LOGGER.info("Added file to list: %s", message.strip())
+
+        elif message.startswith("End file list"):
+            if self._file_list_timer:
+                self._file_list_timer.cancel()
+                self._file_list_timer = None
+            self.save_gcode_file_list(self._file_list)
+            self._file_list = []  # Reset della lista
+            _LOGGER.info("Completed processing file list.")
+
+        else:
+            # In caso di timeout
+            if self._file_list_timer:
+                self._file_list_timer.cancel()
+            self._file_list_timer = asyncio.get_event_loop().call_later(10, self._handle_file_list_timeout)
+
+    def _handle_file_list_timeout(self):
+        """Gestisce il timeout per il completamento della lista file."""
+        if self._file_list:
+            self.save_gcode_file_list(self._file_list)  # Salva i file accumulati finora
+            _LOGGER.warning("File list processing timed out. Saved incomplete list.")
+        self._file_list = []  # Reset della lista
+
+    def save_gcode_file_list(self, file_list):
+        """Salva l'elenco dei file in un file JSON."""
+        files_dir = os.path.join("www", "community", "haghost5")
+        json_path = os.path.join(files_dir, "files.json")
+        try:
+            os.makedirs(files_dir, exist_ok=True)
+            with open(json_path, "w") as json_file:
+                json.dump(file_list, json_file)
+            _LOGGER.info("File list saved to %s", json_path)
+        except Exception as e:
+            _LOGGER.error("Failed to save file list to JSON: %s", e)
 
 
 class PrinterM997Sensor(HAGhost5BaseSensor):
