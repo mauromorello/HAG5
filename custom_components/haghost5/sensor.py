@@ -345,11 +345,10 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                 self._file_list_timer = None
             _LOGGER.info("Started processing file list.")
 
-        elif re.match(r"^(?!M\\d{1,3}\\s).+\\.gcode\\s*$", message):  # Esclude i messaggi che iniziano con comandi 'Mxxx'
+        elif re.match(r"^(?!M(994|23|30)\\s).+\\.gcode\\s*$", message):  # Escludi M994, M23, M30
             clean_message = message.strip()
             self._file_list.append(clean_message)
             _LOGGER.info("Added file to list (via RegEx): %s", clean_message)
-
 
         elif message.startswith("End file list"):
             self._handle_end_file_list()
