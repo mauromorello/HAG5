@@ -13,12 +13,14 @@ class Hag5OperationsCard extends HTMLElement {
             const uploader = this.config.uploader || false;
             const filelist = this.config.filelist || false;
             const debug = this.config.debug || false;
+            const command = this.config.command || false;
 
             // Genera la query string con le opzioni
             const queryParams = new URLSearchParams({
                 uploader: uploader,
                 filelist: filelist,
-                debug: debug
+                debug: debug,
+                command: command
             }).toString();
 
             this.innerHTML = `
