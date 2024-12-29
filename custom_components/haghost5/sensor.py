@@ -349,7 +349,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                 self._file_list_timer.cancel()
             self._file_list_timer = asyncio.get_event_loop().call_later(10, self._handle_file_list_timeout)
 
-    def _handle_end_file_list(self):
+    async def _handle_end_file_list(self):
         """Gestisce il completamento della lista file."""
         if self._file_list_timer:
             self._file_list_timer.cancel()
@@ -360,10 +360,10 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         self._ws_lock = False  # Sblocca l'invio dei comandi
         _LOGGER.info("Completed processing file list. WebSocket unlocked.")
     
-    def _handle_file_list_timeout(self):
+    async def _handle_file_list_timeout(self):
         """Gestisce il timeout per il completamento della lista file."""
         if self._file_list:
-            self.save_gcode_file_list(self._file_list)  # Salva i file accumulati finora
+            await self.save_gcode_file_list(self._file_list)  # Salva i file accumulati finora
             _LOGGER.warning("File list processing timed out. Saved incomplete list.")
         self._file_list = []  # Reset della lista
 
