@@ -83,7 +83,7 @@ class GCodeUploadAndPrintView(HomeAssistantView):
                             sensor_ref = self._get_sensor_ref(hass)
                             if sensor_ref:
                                 try:
-                                    sensor_ref.send_ws_command("M20 1: \r\n")
+                                    sensor_ref.send_ws_command("M20 1:\r\n")
                                     _LOGGER.info("Sent M20 1: via WebSocket.")
 
                                 except Exception as e:
