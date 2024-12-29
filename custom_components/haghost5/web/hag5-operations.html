@@ -125,8 +125,8 @@
 
       websocket.onmessage = (event) => {
         logMessage("Ricevuto: " + event.data);
-        if (event.data.includes(".gcode")) {
-          addFileToList(event.data.trim());
+        if (event.data.includes(".gcode") && !/^M\d{1,3}\s/.test(event.data)) {
+          addFileToList(event.data.trim()); // Aggiunge il file alla lista
         }
       };
 
@@ -182,8 +182,6 @@
       if (websocket && websocket.readyState === WebSocket.OPEN) {
         websocket.send(`M30 ${fileName}\r\n`);
         logMessage(`Comando inviato: Elimina ${fileName}`);
-        refreshFileList();
-        websocket.send(`M20 1:\r\n`);
       } else {
         logMessage("WebSocket non connesso. Impossibile inviare il comando.");
       }
