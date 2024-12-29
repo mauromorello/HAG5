@@ -232,6 +232,9 @@ function selectAndPrint(fileName) {
 function deleteFile(fileName) {
   if (websocket && websocket.readyState === WebSocket.OPEN) {
     websocket.send(`M30 1:${fileName}\r\n`);
+    refreshFileList();
+    websocket.send("M20 1:\r\n"); // Aggiorna lista file 
+    
     logMessage(`Comando inviato: Elimina ${fileName}`);
   } else {
     logMessage("WebSocket non connesso. Impossibile inviare il comando.");
