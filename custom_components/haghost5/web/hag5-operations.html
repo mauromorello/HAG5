@@ -71,8 +71,13 @@
   </style>
 </head>
 <body>
+  <div class="ha-card" id="command-section" style="display: none;">
+    <h4>Commands</h4>
+
+  </div>
+  
   <div class="ha-card" id="uploader-section" style="display: none;">
-    <h3>Upload GCODE</h3>
+    <h4>Upload GCODE</h4>
     <form id="upload-form" method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data" onsubmit="handleUpload(event)">
       <label>File GCODE</label>
       <input id="upload-input" type="file" name="file" accept=".gcode">
@@ -81,12 +86,12 @@
   </div>
 
   <div class="ha-card" id="filelist-section" style="display: none;">
-    <h3>File List</h3>
+    <h4>File List</h4>
     <ul id="file-list"></ul>
   </div>
 
   <div class="ha-card" id="debug-section" style="display: none;">
-    <h3>WebSocket Debug</h3>
+    <h4>WebSocket Debug</h4>
     <label for="ws-command">Comando da inviare:</label>
     <input type="text" id="ws-command" placeholder="Inserisci comando WebSocket">
     <button id="send-btn" onclick="sendWsCommand()">Invia</button>
@@ -101,6 +106,7 @@
     const uploaderEnabled = params.get('uploader') === 'true';
     const filelistEnabled = params.get('filelist') === 'true';
     const debugEnabled = params.get('debug') === 'true';
+    const commandEnabled = params.get('command') === 'true';
 
     // Mostra le sezioni in base ai parametri
     if (uploaderEnabled) {
@@ -111,6 +117,9 @@
     }
     if (debugEnabled) {
       document.getElementById('debug-section').style.display = 'block';
+    }
+    if (commandEnabled) {
+      document.getElementById('command-section').style.display = 'block';
     }
 
     // WebSocket Setup
