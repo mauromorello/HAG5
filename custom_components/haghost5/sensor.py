@@ -104,6 +104,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
 
     def __init__(self, ip_address, hass):
         super().__init__(ip_address, "printer_online_status")  # Passa ip_address e il nome del sensore
+        self._ws_lock = False  # Variabile per bloccare l'invio di WS
         self._state = STATE_OFF
         self._last_message_time = None
         self._websocket_started = False
@@ -238,6 +239,14 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     
     async def _send_command_via_ws(self, command: str):
         """Helper to send a command asynchronously via WebSocket."""
+        if self._ws_lock and not command.startswith("M20"):
+            _LOGGER.warning("WebSocket locked. Command '%s' not sent.", command)
+            return
+
+        if command.startswith("M20"):
+            self._ws_lock = True  # Blocca l'invio di altri comandi
+            _LOGGER.info("WebSocket locked. Waiting for 'End file list' or timeout.")
+
         ws_url = f"ws://{self._ip_address}:8081/"
         try:
             async with ClientSession() as session:
@@ -245,7 +254,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                     await ws.send_str(command)
                     _LOGGER.info("Sent WebSocket command: %s", command)
         except Exception as e:
-            _LOGGER.error("Error sending WebSocket command: %s", e)
+            _LOGGER.error("Error sending WebSocket command: %s", e)    
 
     async def _start_websocket(self):
         """Start the WebSocket connection and process incoming messages."""
@@ -332,12 +341,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
             _LOGGER.info("Added file to list (via RegEx): %s", clean_message)
 
         elif message.startswith("End file list"):
-            if self._file_list_timer:
-                self._file_list_timer.cancel()
-                self._file_list_timer = None
-            await self.save_gcode_file_list(self._file_list)  # Chiamata senza passare 'hass'
-            self._file_list = []  # Reset della lista
-            _LOGGER.info("Completed processing file list.")
+            self._handle_end_file_list()
 
         else:
             # In caso di timeout
@@ -345,6 +349,17 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                 self._file_list_timer.cancel()
             self._file_list_timer = asyncio.get_event_loop().call_later(10, self._handle_file_list_timeout)
 
+    def _handle_end_file_list(self):
+        """Gestisce il completamento della lista file."""
+        if self._file_list_timer:
+            self._file_list_timer.cancel()
+            self._file_list_timer = None
+
+        await self.save_gcode_file_list(self._file_list)  # Chiamata senza passare 'hass'
+        self._file_list = []  # Resetta la lista
+        self._ws_lock = False  # Sblocca l'invio dei comandi
+        _LOGGER.info("Completed processing file list. WebSocket unlocked.")
+    
     def _handle_file_list_timeout(self):
         """Gestisce il timeout per il completamento della lista file."""
         if self._file_list:
