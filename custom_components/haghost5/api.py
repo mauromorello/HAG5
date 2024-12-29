@@ -78,19 +78,7 @@ class GCodeUploadAndPrintView(HomeAssistantView):
                             )
                         if resp_json.get("err") == 0:
                             _LOGGER.info("File uploaded successfully: %s", filename)
-                            # Se arriviamo qui, il file è stato ricevuto correttamente dalla stampante
-                            # Adesso inviamo i comandi M23/M24 (se abbiamo il sensor).
-                            sensor_ref = self._get_sensor_ref(hass)
-                            if sensor_ref:
-                                try:
-                                    sensor_ref.send_ws_command("M20 1: " + "\n")
-                                    _LOGGER.info("Sent M20 1: via WebSocket.")
 
-                                except Exception as e:
-                                    _LOGGER.error("Error sending WS commands: %s", e)
-                                    return web.Response(text=f"Error sending WS commands: {e}", status=500)
-                            else:
-                                _LOGGER.warning("No sensor_ref found; cannot send WS commands to start print.")
                         else:
                             _LOGGER.error("Printer returned error: %s", resp_json)
                             return web.Response(
