@@ -40,7 +40,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     _LOGGER.debug("Setting up HAGhost5 integration for IP: %s", ip_address)
 
     if DOMAIN not in hass.data:
-        hass.data[DOMAIN] = {"entities": []}
+        #OLD hass.data[DOMAIN] = {"entities": []}
+        hass.data[DOMAIN]['entities'] = []
         
     hass.data[DOMAIN]['ip_address'] = ip_address
     
