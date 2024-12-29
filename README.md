@@ -8,6 +8,8 @@ HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant
 
 The project is currently in **beta** and is under active testing. Users are advised to use it at their own risk. The author does not take responsibility for any potential issues, including but not limited to malfunctioning of the printer, Home Assistant, or any related systems.
 
+⚠️ **Warning:** Manual commands sent to the printer through this integration can damage your printer if used improperly. Proceed with caution and consult your printer's documentation.
+
 ---
 
 ## Features
@@ -18,20 +20,17 @@ The project is currently in **beta** and is under active testing. Users are advi
   - Temperature of the hotend and bed.
   - Printer status (idle, printing, error).
   - Remaining time for print completion.
- 
-![3D Print Visualization](images/img2.jpeg "Add HA sensors")
 
 ### 2. **3D Print Visualization**
 - Includes a **custom card** that uses [Three.js](https://threejs.org/) to provide a live visualization of the ongoing print.
 - Visualize the G-code layer by layer in 3D as the print progresses.
 
-Experience live G-code visualization during a print:
-
-![3D Print Visualization](images/img1.jpeg "3D Print Visualization in Action")
-
-### 3. **G-code Upload**
-- A web-based card provides an easy way to upload G-code files directly to the printer.
-- The uploaded files can be visualized in 3D through the integrated custom card.
+### 3. **HAG5 Operations Card**
+- A new **custom card** called `HAG5 Operations` provides a unified interface for interacting with the printer:
+  - **Uploader Section:** Upload G-code files directly to the printer.
+  - **File List Section:** View and manage files stored on the printer.
+  - **Debug Section:** Send WebSocket commands manually and view logs.
+  - **Command Section:** Send predefined commands to the printer.
 
 ---
 
@@ -51,21 +50,25 @@ Experience live G-code visualization during a print:
 
 ## Configuration
 
-### 1. Add the Integration
-- Go to **Settings** → **Devices & Services** → **Add Integration**.
+### 1. **Add the Integration**
+- Go to **Settings → Devices & Services → Add Integration**.
 - Search for "HAGhost5" and follow the on-screen instructions.
 
-### 2. Enable the Custom Card
-- It is necessary to include the following line in **Settings** → **Dashboards** → **Resources**:
-  ```
-  /local/community/haghost5/hag5-renderer-card/hag5-renderer-card.js
-  ```
+### 2. **Enable the Custom Cards**
+- Add the following resource paths in **Settings → Dashboards → Resources**:
+  - `/local/community/haghost5/hag5-renderer-card/hag5-renderer-card.js`
+  - `/local/community/haghost5/hag5-operations-card/hag5-operations-card.js`
 
-### 3. Configure the Uploader Card
-- To enable the file uploader, add a "Web" card to your dashboard and set its URL to:
+### 3. **Configure the Operations Card**
+- To enable the operations card, include it in your Lovelace dashboard configuration:
+  ```yaml
+  type: custom:hag5-operations-card
+  uploader: true
+  filelist: true
+  debug: true
+  command: true
   ```
-  /local/community/haghost5/hag5_upload.html
-  ```
+- Set the parameters `uploader`, `filelist`, `debug`, and `command` to `true` or `false` depending on the sections you want to enable.
 
 ---
 
