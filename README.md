@@ -19,7 +19,7 @@ The project is currently in **beta** and is under active testing. Users are advi
   - Print progress.
   - Temperature of the hotend and bed.
   - Printer status (idle, printing, error).
-  - Remaining time for print completion.
+  - Passed time for print completion.
 
 ### 2. **3D Print Visualization**
 - Includes a **custom card** that uses [Three.js](https://threejs.org/) to provide a live visualization of the ongoing print.
