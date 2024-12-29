@@ -8,6 +8,9 @@ class Hag5OperationsCard extends HTMLElement {
     }
 
     set hass(hass) {
+        // Recupera l'IP della stampante dall'integrazione configurata
+        const ipAddress = hass.states['sensor.printer_ip_address']?.state || 'unknown';
+
         // Crea il contenuto della card solo se non esiste
         if (!this.iframe) {
             const uploader = this.config.uploader || false;
@@ -20,7 +23,8 @@ class Hag5OperationsCard extends HTMLElement {
                 uploader: uploader,
                 filelist: filelist,
                 debug: debug,
-                command: command
+                command: command,
+                ip: ipAddress // Aggiunge l'IP come parametro
             }).toString();
 
             this.innerHTML = `
