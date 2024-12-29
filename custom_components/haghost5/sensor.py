@@ -9,6 +9,7 @@ import traceback
 from aiohttp import ClientSession, WSMsgType
 from datetime import datetime, timedelta
 from .const import DOMAIN
+from asyncio import Lock
 
 from homeassistant.components.sensor import (
     SensorEntity,
