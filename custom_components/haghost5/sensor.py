@@ -364,6 +364,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         """Gestisce il timeout per il completamento della lista file."""
         if self._file_list:
             await self.save_gcode_file_list(self._file_list)  # Salva i file accumulati finora
+            self._ws_lock = False
             _LOGGER.warning("File list processing timed out. Saved incomplete list.")
         self._file_list = []  # Reset della lista
 
@@ -374,8 +375,10 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
             async with aiofiles.open(json_path, "w") as json_file:
                 await json_file.write(json.dumps(file_list, indent=4))
             _LOGGER.info("File list saved to JSON at: %s", json_path)
+            self._ws_lock = False
         except Exception as e:
             _LOGGER.error("Failed to save file list to JSON: %s", e)
+            self._ws_lock = False
 
 
 
