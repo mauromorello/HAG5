@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>HAG5 Operations</title>
+  <style>
+    :root {
+      --ha-card-border-radius: 12px;
+      --card-background-color: #fff;
+      --primary-text-color: #333;
+      --ha-card-box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+      --btn-disabled-color: #ccc;
+      --btn-enabled-color: #0288D1;
+    }
+    body {
+      margin: 0;
+      font-family: "Roboto", sans-serif;
+      background-color: var(--primary-background-color, #fff);
+      color: var(--primary-text-color, #333);
+    }
+    .ha-card {
+      background: var(--card-background-color);
+      border-radius: var(--ha-card-border-radius);
+      padding: 8px;
+      margin: 8px;
+      max-width: 600px;
+    }
+    h3 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 1.25rem;
+      color: var(--primary-text-color);
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 0.95rem;
+      color: #fff;
+      background-color: var(--btn-disabled-color);
+    }
+    button.enabled {
+      background-color: var(--btn-enabled-color);
+    }
+    .log-container {
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 8px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="ha-card" id="uploader-section" style="display: none;">
+    <h3>Upload GCODE</h3>
+    <form id="upload-form" method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data" onsubmit="handleUpload(event)">
+      <label>File GCODE</label>
+      <input id="upload-input" type="file" name="file" accept=".gcode">
+      <button id="upload-btn" type="submit" disabled>Upload</button>
+    </form>
+  </div>
+
+  <div class="ha-card" id="filelist-section" style="display: none;">
+    <h3>File List</h3>
+    <ul id="file-list"></ul>
+  </div>
+
+  <div class="ha-card" id="debug-section" style="display: none;">
+    <h3>WebSocket Debug</h3>
+    <label for="ws-command">Comando da inviare:</label>
+    <input type="text" id="ws-command" placeholder="Inserisci comando WebSocket">
+    <button id="send-btn" onclick="sendWsCommand()">Invia</button>
+    <div class="log-container" id="ws-log"></div>
+  </div>
+
+  <script>
+    let websocket;
+
+    // Leggi parametri da URL
+    const params = new URLSearchParams(window.location.search);
+    const uploaderEnabled = params.get('uploader') === 'true';
+    const filelistEnabled = params.get('filelist') === 'true';
+    const debugEnabled = params.get('debug') === 'true';
+
+    // Mostra le sezioni in base ai parametri
+    if (uploaderEnabled) {
+      document.getElementById('uploader-section').style.display = 'block';
+    }
+    if (filelistEnabled) {
+      document.getElementById('filelist-section').style.display = 'block';
+    }
+    if (debugEnabled) {
+      document.getElementById('debug-section').style.display = 'block';
+    }
+
+    // WebSocket Setup
+    function openWebSocket() {
+      websocket = new WebSocket("ws://192.168.1.100:8081/");
+
+      websocket.onopen = () => {
+        logMessage("WebSocket aperto");
+        websocket.send("M20 1:\r\n"); // Richiesta iniziale per lista file
+      };
+
+      websocket.onmessage = (event) => {
+        logMessage("Ricevuto: " + event.data);
+        if (event.data.includes(".gcode")) {
+          addFileToList(event.data.trim());
+        }
+      };
+
+      websocket.onerror = (error) => {
+        logMessage("Errore WebSocket: " + error.message);
+      };
+
+      websocket.onclose = () => {
+        logMessage("WebSocket chiuso");
+      };
+    }
+
+    // Logga i messaggi
+    function logMessage(message) {
+      const logContainer = document.getElementById("ws-log");
+      const entry = document.createElement("div");
+      entry.textContent = message;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // Aggiungi file alla lista
+    function addFileToList(fileName) {
+      const fileList = document.getElementById("file-list");
+      const listItem = document.createElement("li");
+      listItem.innerHTML = `<a href="#" onclick="selectAndPrint('${fileName}')">[S]</a> ${fileName}`;
+      fileList.appendChild(listItem);
+    }
+
+    // Seleziona e stampa un file
+    function selectAndPrint(fileName) {
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(`M23 ${fileName}\r\n`);
+        websocket.send("M24\r\n");
+        logMessage(`Comando inviato: Stampa ${fileName}`);
+      } else {
+        logMessage("WebSocket non connesso. Impossibile inviare il comando.");
+      }
+    }
+
+    // Invia comando via WebSocket
+    function sendWsCommand() {
+      const commandInput = document.getElementById("ws-command");
+      const command = commandInput.value.trim();
+
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(command + "\r\n");
+        logMessage("Inviato: " + command);
+        commandInput.value = "";
+      } else {
+        logMessage("WebSocket non connesso. Impossibile inviare il comando.");
+      }
+    }
+
+    // Gestione Upload
+    async function handleUpload(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          logMessage("Upload completato.");
+          websocket.send("M20 1:\r\n"); // Aggiorna lista file
+        } else {
+          logMessage("Errore durante l'upload.");
+        }
+      } catch (error) {
+        logMessage("Errore: " + error.message);
+      }
+    }
+
+    // Apri WebSocket quando la pagina viene caricata
+    window.onload = openWebSocket;
+  </script>
+</body>
+</html>
