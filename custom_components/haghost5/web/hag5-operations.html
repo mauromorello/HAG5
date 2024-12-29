@@ -119,13 +119,13 @@
 
       websocket.onopen = () => {
         logMessage("WebSocket aperto");
+        refreshFileList();
         websocket.send("M20 1:\r\n"); // Richiesta iniziale per lista file
       };
 
       websocket.onmessage = (event) => {
         logMessage("Ricevuto: " + event.data);
         if (event.data.includes(".gcode")) {
-          refreshFileList();
           addFileToList(event.data.trim());
         }
       };
@@ -159,9 +159,9 @@
       const fileList = document.getElementById("file-list");
       const listItem = document.createElement("li");
       listItem.innerHTML = `
-        <span class="icon" onclick="selectAndPrint('${fileName}')">🖨️</span>
+        <span class="icon" onclick="selectAndPrint('${fileName}')">🖨️ -> </span> 
         ${fileName}
-        <span class="icon" onclick="deleteFile('${fileName}')">🗑️</span>
+        <span class="icon" onclick="deleteFile('${fileName}')"> -> 🗑️</span>
       `;
       fileList.appendChild(listItem);
     }
@@ -215,6 +215,7 @@
 
         if (response.ok) {
           logMessage("Upload completato.");
+          refreshFileList();
           websocket.send("M20 1:\r\n"); // Aggiorna lista file
         } else {
           logMessage("Errore durante l'upload.");
