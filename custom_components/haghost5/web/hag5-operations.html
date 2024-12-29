@@ -139,156 +139,153 @@
     <button id="send-btn" onclick="sendWsCommand()">Invia</button>
     <div class="log-container" id="ws-log"></div>
   </div>
+  <script>let websocket;
 
-  <script>
-    let websocket;
+// Leggi parametri da URL
+const params = new URLSearchParams(window.location.search);
+const uploaderEnabled = params.get('uploader') === 'true';
+const filelistEnabled = params.get('filelist') === 'true';
+const debugEnabled = params.get('debug') === 'true';
+const commandEnabled = params.get('command') === 'true';
+const ipAddress = params.get('ip') || '192.168.1.100'; // Default IP
 
-    // Leggi parametri da URL
-    const params = new URLSearchParams(window.location.search);
-    const uploaderEnabled = params.get('uploader') === 'true';
-    const filelistEnabled = params.get('filelist') === 'true';
-    const debugEnabled = params.get('debug') === 'true';
-    const commandEnabled = params.get('command') === 'true';
+// Mostra le sezioni in base ai parametri
+if (uploaderEnabled) {
+  document.getElementById('uploader-section').style.display = 'block';
+}
+if (filelistEnabled) {
+  document.getElementById('filelist-section').style.display = 'block';
+}
+if (debugEnabled) {
+  document.getElementById('debug-section').style.display = 'block';
+}
+if (commandEnabled) {
+  document.getElementById('command-section').style.display = 'block';
+}
 
-    // Mostra le sezioni in base ai parametri
-    if (uploaderEnabled) {
-      document.getElementById('uploader-section').style.display = 'block';
+// WebSocket Setup
+function openWebSocket() {
+  const websocketUrl = `ws://${ipAddress}:8081/`;
+  websocket = new WebSocket(websocketUrl);
+
+  websocket.onopen = () => {
+    logMessage("WebSocket aperto a: " + websocketUrl);
+    refreshFileList();
+    websocket.send("M20 1:\r\n"); // Richiesta iniziale per lista file
+  };
+
+  websocket.onmessage = (event) => {
+    logMessage("Ricevuto: " + event.data);
+    if (event.data.includes(".gcode") && !/^M\\d{1,3}\\s/.test(event.data)) {
+      addFileToList(event.data.trim()); // Aggiunge il file alla lista
     }
-    if (filelistEnabled) {
-      document.getElementById('filelist-section').style.display = 'block';
+  };
+
+  websocket.onerror = (error) => {
+    logMessage("Errore WebSocket: " + error.message);
+  };
+
+  websocket.onclose = () => {
+    logMessage("WebSocket chiuso");
+  };
+}
+
+// Logga i messaggi
+function logMessage(message) {
+  const logContainer = document.getElementById("ws-log");
+  const entry = document.createElement("div");
+  entry.textContent = message;
+  logContainer.appendChild(entry);
+  logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+// Svuota la lista dei file
+function refreshFileList() {
+  const fileList = document.getElementById("file-list");
+  fileList.innerHTML = "";
+}
+
+// Aggiungi file alla lista
+function addFileToList(fileName) {
+  const fileList = document.getElementById("file-list");
+  const listItem = document.createElement("li");
+  listItem.innerHTML = `
+    <span class="icon" onclick="selectAndPrint('${fileName}')">🖨️ </span> 
+    ${fileName}
+    <span class="icon" onclick="deleteFile('${fileName}')"> 🗑️</span>
+  `;
+  fileList.appendChild(listItem);
+}
+
+// Seleziona e stampa un file
+function selectAndPrint(fileName) {
+  if (websocket && websocket.readyState === WebSocket.OPEN) {
+    websocket.send(`M23 ${fileName}\r\n`);
+    websocket.send("M24\r\n");
+    logMessage(`Comando inviato: Stampa ${fileName}`);
+  } else {
+    logMessage("WebSocket non connesso. Impossibile inviare il comando.");
+  }
+}
+
+// Elimina un file
+function deleteFile(fileName) {
+  if (websocket && websocket.readyState === WebSocket.OPEN) {
+    websocket.send(`M30 ${fileName}\r\n`);
+    logMessage(`Comando inviato: Elimina ${fileName}`);
+  } else {
+    logMessage("WebSocket non connesso. Impossibile inviare il comando.");
+  }
+}
+
+// Funzione per inviare un comando WebSocket
+function sendCommand(command) {
+  if (websocket && websocket.readyState === WebSocket.OPEN) {
+    websocket.send(command + "\r\n");
+    logMessage("Inviato: " + command);
+  } else {
+    logMessage("WebSocket non connesso. Impossibile inviare il comando.");
+  }
+}
+
+// Invia comando via WebSocket
+function sendWsCommand() {
+  const commandInput = document.getElementById("ws-command");
+  const command = commandInput.value.trim();
+
+  if (websocket && websocket.readyState === WebSocket.OPEN) {
+    websocket.send(command + "\r\n");
+    logMessage("Inviato: " + command);
+    commandInput.value = "";
+  } else {
+    logMessage("WebSocket non connesso. Impossibile inviare il comando.");
+  }
+}
+
+// Gestione Upload
+async function handleUpload(event) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+
+  try {
+    const response = await fetch(form.action, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (response.ok) {
+      logMessage("Upload completato.");
+      refreshFileList();
+      websocket.send("M20 1:\r\n"); // Aggiorna lista file
+    } else {
+      logMessage("Errore durante l'upload.");
     }
-    if (debugEnabled) {
-      document.getElementById('debug-section').style.display = 'block';
-    }
-    if (commandEnabled) {
-      document.getElementById('command-section').style.display = 'block';
-    }
+  } catch (error) {
+    logMessage("Errore: " + error.message);
+  }
+}
 
-    // WebSocket Setup
-    function openWebSocket() {
-      websocket = new WebSocket("ws://192.168.1.100:8081/");
-
-      websocket.onopen = () => {
-        logMessage("WebSocket aperto");
-        refreshFileList();
-        websocket.send("M20 1:\r\n"); // Richiesta iniziale per lista file
-      };
-
-      websocket.onmessage = (event) => {
-        logMessage("Ricevuto: " + event.data);
-        if (event.data.includes(".gcode") && !/^M\d{1,3}\s/.test(event.data)) {
-          addFileToList(event.data.trim()); // Aggiunge il file alla lista
-        }
-      };
-
-      websocket.onerror = (error) => {
-        logMessage("Errore WebSocket: " + error.message);
-      };
-
-      websocket.onclose = () => {
-        logMessage("WebSocket chiuso");
-      };
-    }
-
-    // Logga i messaggi
-    function logMessage(message) {
-      const logContainer = document.getElementById("ws-log");
-      const entry = document.createElement("div");
-      entry.textContent = message;
-      logContainer.appendChild(entry);
-      logContainer.scrollTop = logContainer.scrollHeight;
-    }
-
-    // Svuota la lista dei file
-    function refreshFileList() {
-      const fileList = document.getElementById("file-list");
-      fileList.innerHTML = "";
-    }
-
-    // Aggiungi file alla lista
-    function addFileToList(fileName) {
-      const fileList = document.getElementById("file-list");
-      const listItem = document.createElement("li");
-      listItem.innerHTML = `
-        <span class="icon" onclick="selectAndPrint('${fileName}')">🖨️ -> </span> 
-        ${fileName}
-        <span class="icon" onclick="deleteFile('${fileName}')"> -> 🗑️</span>
-      `;
-      fileList.appendChild(listItem);
-    }
-
-    // Seleziona e stampa un file
-    function selectAndPrint(fileName) {
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(`M23 ${fileName}\r\n`);
-        websocket.send("M24\r\n");
-        logMessage(`Comando inviato: Stampa ${fileName}`);
-      } else {
-        logMessage("WebSocket non connesso. Impossibile inviare il comando.");
-      }
-    }
-
-    // Elimina un file
-    function deleteFile(fileName) {
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(`M30 ${fileName}\r\n`);
-        logMessage(`Comando inviato: Elimina ${fileName}`);
-      } else {
-        logMessage("WebSocket non connesso. Impossibile inviare il comando.");
-      }
-    }
-
-    // Funzione per inviare un comando WebSocket
-    function sendCommand(command) {
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(command + "\r\n");
-        logMessage("Inviato: " + command);
-      } else {
-        logMessage("WebSocket non connesso. Impossibile inviare il comando.");
-      }
-    }
-
-    
-    // Invia comando via WebSocket
-    function sendWsCommand() {
-      const commandInput = document.getElementById("ws-command");
-      const command = commandInput.value.trim();
-
-      if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(command + "\r\n");
-        logMessage("Inviato: " + command);
-        commandInput.value = "";
-      } else {
-        logMessage("WebSocket non connesso. Impossibile inviare il comando.");
-      }
-    }
-
-    // Gestione Upload
-    async function handleUpload(event) {
-      event.preventDefault();
-      const form = event.target;
-      const formData = new FormData(form);
-
-      try {
-        const response = await fetch(form.action, {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (response.ok) {
-          logMessage("Upload completato.");
-          refreshFileList();
-          websocket.send("M20 1:\r\n"); // Aggiorna lista file
-        } else {
-          logMessage("Errore durante l'upload.");
-        }
-      } catch (error) {
-        logMessage("Errore: " + error.message);
-      }
-    }
-
-    // Apri WebSocket quando la pagina viene caricata
-    window.onload = openWebSocket;
-  </script>
-</body>
-</html>
+// Apri WebSocket quando la pagina viene caricata
+window.onload = openWebSocket;
+</script>
