@@ -277,26 +277,12 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
         # Avvia il polling dei comandi in parallelo
         asyncio.create_task(self._start_polling_commands())
 
-        headers = {
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "en-GB,en;q=0.9,it-IT;q=0.8,it;q=0.7,en-US;q=0.6,zh-CN;q=0.5,zh;q=0.4",
-            "Cache-Control": "no-cache",
-            "Connection": "Upgrade",
-            "Host": "192.168.1.100:8081",
-            "Origin": "http://mimmoz.ns0.it:9999",
-            "Pragma": "no-cache",
-            "Sec-WebSocket-Extensions": "permessage-deflate; client_max_window_bits",
-            "Sec-WebSocket-Key": "nfBWX7AvUAFxZv4dNJx27Q==",
-            "Sec-WebSocket-Version": "13",
-            "Upgrade": "websocket",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
-        }
 
     
         while self._state == STATE_ON:
             try:
                 async with ClientSession() as session:
-                    async with session.ws_connect(ws_url, headers=headers) as ws:
+                    async with session.ws_connect(ws_url) as ws:
                         async for msg in ws:
                             if msg.type == WSMsgType.TEXT:
                                 # Process WebSocket messages and update state
