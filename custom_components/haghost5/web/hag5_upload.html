@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Upload GCODE</title>
+  <title>Upload GCODE & WebSocket Debug</title>
   <style>
     :root {
       --ha-card-border-radius: 12px;
@@ -21,10 +21,9 @@
     .ha-card {
       background: var(--card-background-color);
       border-radius: var(--ha-card-border-radius);
-      
       padding: 8px;
       margin: 8px;
-      max-width: 400px;
+      max-width: 600px;
     }
     h3 {
       margin-top: 0;
@@ -37,8 +36,10 @@
       margin-bottom: 4px;
       display: inline-block;
     }
-    input[type="file"] {
+    input[type="file"], input[type="text"] {
       margin-bottom: 8px;
+      width: calc(100% - 16px);
+      padding: 4px;
     }
     button {
       cursor: pointer;
@@ -57,18 +58,28 @@
       border: none;
       border-top: 1px solid #ccc;
     }
+    .log-container {
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 8px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: #444;
+    }
   </style>
 </head>
 <body>
   <div class="ha-card">
-
     <!-- Form per Upload Semplice -->
     <form method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data">
       <label>File GCODE (solo upload)</label>
       <input type="file" name="file" accept=".gcode" onchange="toggleButtonState(this, 'upload-btn')">
       <button id="upload-btn" type="submit" disabled>Upload</button>
     </form>
-    
+
     <hr />
 
     <!-- Form per Upload + Print -->
@@ -77,19 +88,69 @@
       <input type="file" name="file" accept=".gcode" onchange="toggleButtonState(this, 'print-btn')">
       <button id="print-btn" type="submit" disabled>Upload & Print</button>
     </form>
+
+    <hr />
+
+    <!-- WebSocket Debug -->
+    <h3>WebSocket Debug</h3>
+    <label for="ws-command">Comando da inviare:</label>
+    <input type="text" id="ws-command" placeholder="Inserisci comando WebSocket">
+    <button id="send-btn" onclick="sendWsCommand()">Invia</button>
+
+    <div class="log-container" id="ws-log">
+      <!-- I messaggi WebSocket appariranno qui -->
+    </div>
   </div>
 
   <script>
-    function toggleButtonState(input, buttonId) {
-      const button = document.getElementById(buttonId);
-      if (input.files.length > 0) {
-        button.disabled = false;
-        button.classList.add('enabled');
+    let websocket;
+    const wsLog = document.getElementById("ws-log");
+
+    // Apri il WebSocket
+    function openWebSocket() {
+      websocket = new WebSocket("ws://192.168.1.100:8081/");
+      
+      websocket.onopen = () => {
+        logMessage("WebSocket aperto");
+      };
+
+      websocket.onmessage = (event) => {
+        logMessage("Ricevuto: " + event.data);
+      };
+
+      websocket.onerror = (error) => {
+        logMessage("Errore WebSocket: " + error.message);
+      };
+
+      websocket.onclose = () => {
+        logMessage("WebSocket chiuso");
+      };
+    }
+
+    // Logga i messaggi nel box
+    function logMessage(message) {
+      const entry = document.createElement("div");
+      entry.textContent = message;
+      wsLog.appendChild(entry);
+      wsLog.scrollTop = wsLog.scrollHeight; // Scroll automatico
+    }
+
+    // Invia un comando WebSocket
+    function sendWsCommand() {
+      const commandInput = document.getElementById("ws-command");
+      const command = commandInput.value.trim();
+      
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(command + "\n");
+        logMessage("Inviato: " + command);
+        commandInput.value = ""; // Pulisce l'input
       } else {
-        button.disabled = true;
-        button.classList.remove('enabled');
+        logMessage("WebSocket non connesso. Impossibile inviare il comando.");
       }
     }
+
+    // Apri il WebSocket quando la pagina viene caricata
+    window.onload = openWebSocket;
   </script>
 </body>
 </html>
