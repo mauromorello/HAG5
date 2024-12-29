@@ -4,6 +4,7 @@ import os
 import asyncio
 import json
 import aiofiles
+import traceback
 
 from aiohttp import ClientSession, WSMsgType
 from datetime import datetime, timedelta
