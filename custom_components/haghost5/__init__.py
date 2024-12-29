@@ -39,10 +39,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     ip_address = config_entry.data["ip_address"]
     _LOGGER.debug("Setting up HAGhost5 integration for IP: %s", ip_address)
 
+    # Inizializza hass.data[DOMAIN] se non esiste
     if DOMAIN not in hass.data:
-        #OLD hass.data[DOMAIN] = {"entities": []}
+        hass.data[DOMAIN] = {}
+
+    # Assicurati che 'entities' esista
+    if 'entities' not in hass.data[DOMAIN]:
         hass.data[DOMAIN]['entities'] = []
-        
+
+    # Salva l'IP della stampante
     hass.data[DOMAIN]['ip_address'] = ip_address
     
     # 1) Registra il dispositivo esplicitamente
