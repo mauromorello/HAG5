@@ -1,6 +1,6 @@
 # HAGhost5 - Home Assistant Integration for Flying Bear Ghost 5
 
-HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant.io/) that brings the Flying Bear Ghost 5 3D printer into your smart home. This integration is designed for printers running the custom firmware developed by [Renzo Mischianti](https://www.mischianti.org/), enabling advanced features and monitoring capabilities.
+HAGhost5 is a custom integration for [Home Assistant](https://www.home-assistant.io/) that brings the Flying Bear Ghost 5 3D printer into your smart home. This integration is designed for printers running the custom firmware developed by [Renzo Mischianti](https://www.mischianti.org/), enabling monitoring capabilities.
 
 ---
 
