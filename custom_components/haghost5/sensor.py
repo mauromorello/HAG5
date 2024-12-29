@@ -166,6 +166,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     async def async_update(self):
         """Check if the printer is online and start WebSocket if needed."""
         _LOGGER.debug("Checking printer status...")
+        _LOGGER.debug("async_update triggered. Called by: %s", traceback.format_stack())
         try:
             async with ClientSession() as session:
                 async with session.get(f"http://{self._ip_address}:80", timeout=5) as response:
@@ -174,7 +175,12 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
                             _LOGGER.info("Printer is online. Starting WebSocket...")
                             self._state = STATE_ON
                             self._idle_state = False
-                            asyncio.create_task(self._start_websocket())
+                            # Controlla se il WebSocket è già avviato
+                            if not self._websocket_started:
+                                asyncio.create_task(self._start_websocket())
+                            else:
+                                _LOGGER.debug("WebSocket already running. Skipping start.")
+                    
                         return
         except Exception as e:
             _LOGGER.debug("Error checking printer status: %s", e)
