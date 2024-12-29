@@ -105,6 +105,7 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     def __init__(self, ip_address, hass):
         super().__init__(ip_address, "printer_online_status")  # Passa ip_address e il nome del sensore
         self._ws_lock = False  # Variabile per bloccare l'invio di WS
+        self._lock = Lock()  # Lock per sincronizzare l'accesso
         self._state = STATE_OFF
         self._last_message_time = None
         self._websocket_started = False
@@ -239,22 +240,28 @@ class PrinterStatusSensor(HAGhost5BaseSensor):
     
     async def _send_command_via_ws(self, command: str):
         """Helper to send a command asynchronously via WebSocket."""
-        if self._ws_lock and not command.startswith("M20"):
-            _LOGGER.warning("WebSocket locked. Command '%s' not sent.", command)
-            return
-
-        if command.startswith("M20"):
-            self._ws_lock = True  # Blocca l'invio di altri comandi
-            _LOGGER.info("WebSocket locked. Waiting for 'End file list' or timeout.")
-
-        ws_url = f"ws://{self._ip_address}:8081/"
-        try:
-            async with ClientSession() as session:
-                async with session.ws_connect(ws_url) as ws:
-                    await ws.send_str(command)
-                    _LOGGER.info("Sent WebSocket command: %s", command)
-        except Exception as e:
-            _LOGGER.error("Error sending WebSocket command: %s", e)    
+        async with self._lock:  # Usa il lock per garantire thread safety
+            if self._ws_lock and not command.startswith("M20"):
+                _LOGGER.warning("WebSocket locked. Command '%s' not sent.", command)
+                return
+    
+            if command.startswith("M20"):
+                self._ws_lock = True  # Blocca l'invio di altri comandi
+                _LOGGER.info("WebSocket locked. Waiting for 'End file list' or timeout.")
+    
+            ws_url = f"ws://{self._ip_address}:8081/"
+            try:
+                async with ClientSession() as session:
+                    async with session.ws_connect(ws_url) as ws:
+                        await ws.send_str(command)
+                        _LOGGER.info("Sent WebSocket command: %s", command)
+            except Exception as e:
+                _LOGGER.error("Error sending WebSocket command: %s", e)
+            finally:
+                if command.startswith("M20"):
+                    # Ripristina il lock solo dopo l'elaborazione completa
+                    self._ws_lock = False
+  
 
     async def _start_websocket(self):
         """Start the WebSocket connection and process incoming messages."""
