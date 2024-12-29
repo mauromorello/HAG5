@@ -73,6 +73,48 @@
 <body>
   <div class="ha-card" id="command-section" style="display: none;">
     <h4>Commands</h4>
+      <ul id="command-list">
+        <li>
+          <span class="icon" onclick="sendCommand('M105')">▶️</span>
+          M105 - Request temperature
+        </li>
+        <li>
+          <span class="icon" onclick="sendCommand('M997')">▶️</span>
+          M997 - Request printing status
+        </li>
+        <li>
+          <span class="icon" onclick="sendCommand('M994')">▶️</span>
+          M994 - Request general status
+        </li>
+        <li>
+          <span class="icon" onclick="sendCommand('M992')">▶️</span>
+          M992 - Request printing time
+        </li>
+        <li>
+          <span class="icon" onclick="sendCommand('M27')">▶️</span>
+          M27 - Request printing percentage
+        </li>
+        <li>
+          <span class="icon" onclick="sendCommand('G28 X Y')">▶️</span>
+          G28 X Y - Homing X and Y axes
+        </li>
+        <li>
+          <span class="icon" onclick="sendCommand('G28 Z')">▶️</span>
+          G28 Z - Homing Z axis
+        </li>
+        <li>
+          <span class="icon" onclick="sendCommand('M84')">▶️</span>
+          M84 - Disable motors
+        </li>
+        <li>
+          <span class="icon" onclick="sendCommand('M104 S0')">▶️</span>
+          M104 S0 - Cooldown hotend
+        </li>
+        <li>
+          <span class="icon" onclick="sendCommand('M140 S0')">▶️</span>
+          M140 S0 - Cooldown heated bed
+        </li>
+      </ul>
 
   </div>
   
@@ -196,6 +238,17 @@
       }
     }
 
+    // Funzione per inviare un comando WebSocket
+    function sendCommand(command) {
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(command + "\r\n");
+        logMessage("Inviato: " + command);
+      } else {
+        logMessage("WebSocket non connesso. Impossibile inviare il comando.");
+      }
+    }
+
+    
     // Invia comando via WebSocket
     function sendWsCommand() {
       const commandInput = document.getElementById("ws-command");
