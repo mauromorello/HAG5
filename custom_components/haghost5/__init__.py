@@ -63,7 +63,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     await hass.async_add_executor_job(copy_upload_page, hass)
     await hass.async_add_executor_job(copy_visual_page, hass)
     await hass.async_add_executor_job(copy_renderer_card_page, hass)
-
+    await hass.async_add_executor_job(copy_operations_page, hass)
+    await hass.async_add_executor_job(copy_operations_card, hass)
     
     # Nuovo percorso per la directory GCODE
     gcode_path = hass.config.path("www", "community", "haghost5", "gcodes")
@@ -197,4 +198,43 @@ def copy_renderer_card_page(hass: HomeAssistant):
         _LOGGER.error("Error copying hag5-renderer-card.js: %s", e)
 
 
+def copy_operations_page(hass: HomeAssistant):
+    """
+    Copia il file 'hag5-operations.html' dalla cartella custom_components/haghost5/web/
+    in config/www/community/haghost5/hag5-operations.html, 
+    in modo che sia accessibile via /local/community/haghost5/hag5-operations.html
+    """
+    src_file = hass.config.path("custom_components/haghost5/web/hag5-operations.html")
+
+    # Creiamo la cartella /www/community/haghost5/ se non esiste
+    dst_dir = hass.config.path("www", "community", "haghost5")
+    os.makedirs(dst_dir, exist_ok=True)
+
+    dst_file = os.path.join(dst_dir, "hag5-operations.html")
+
+    try:
+        shutil.copyfile(src_file, dst_file)
+        _LOGGER.info("Copied hag5-operations.html to %s", dst_file)
+    except Exception as e:
+        _LOGGER.error("Error copying hag5-operations.html: %s", e)
+
+def copy_operations_card(hass: HomeAssistant):
+    """
+    Copia il file 'hag5-operations-card.js' dalla cartella custom_components/haghost5/web/
+    in config/www/community/haghost5/hag5-operations-card/hag5-operations-card.js,
+    in modo che sia accessibile via /local/community/haghost5/hag5-operations-card/hag5-operations-card.js
+    """
+    src_file = hass.config.path("custom_components/haghost5/web/hag5-operations-card.js")
+
+    # Creiamo la cartella /www/community/haghost5/hag5-operations-card/ se non esiste
+    dst_dir = hass.config.path("www", "community", "haghost5", "hag5-operations-card")
+    os.makedirs(dst_dir, exist_ok=True)
+
+    dst_file = os.path.join(dst_dir, "hag5-operations-card.js")
+
+    try:
+        shutil.copyfile(src_file, dst_file)
+        _LOGGER.info("Copied hag5-operations-card.js to %s", dst_file)
+    except Exception as e:
+        _LOGGER.error("Error copying hag5-operations-card.js: %s", e)
 
