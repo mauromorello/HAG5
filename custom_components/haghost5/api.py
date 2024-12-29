@@ -67,7 +67,15 @@ class GCodeUploadAndPrintView(HomeAssistantView):
             async with ClientSession() as session:
                 async with session.post(upload_url, data=file_bytes, timeout=120) as resp:
                     if resp.status == 200:
-                        resp_json = await resp.json()  # Converti la risposta in formato JSON
+                        try:
+                            resp_json = await resp.json()
+                            _LOGGER.debug("Printer response JSON: %s", resp_json)
+                        except Exception as e:
+                            _LOGGER.error("Failed to parse printer response as JSON: %s", e)
+                            return web.Response(
+                                text=f"Failed to parse printer response: {e}",
+                                status=500
+                            )
                         if resp_json.get("err") == 0:
                             _LOGGER.info("File uploaded successfully: %s", filename)
                             # Se arriviamo qui, il file è stato ricevuto correttamente dalla stampante
