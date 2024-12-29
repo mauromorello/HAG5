@@ -182,6 +182,8 @@
       if (websocket && websocket.readyState === WebSocket.OPEN) {
         websocket.send(`M30 ${fileName}\r\n`);
         logMessage(`Comando inviato: Elimina ${fileName}`);
+        refreshFileList();
+        websocket.send(`M20 1:\r\n`);
       } else {
         logMessage("WebSocket non connesso. Impossibile inviare il comando.");
       }
