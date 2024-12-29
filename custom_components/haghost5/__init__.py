@@ -41,7 +41,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {"entities": []}
-
+        
+    hass.data[DOMAIN]['ip_address'] = ip_address
+    
     # 1) Registra il dispositivo esplicitamente
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
