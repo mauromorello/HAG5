@@ -54,6 +54,20 @@
       font-size: 0.9rem;
       color: #444;
     }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
+    .icon {
+      margin-right: 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -111,6 +125,7 @@
       websocket.onmessage = (event) => {
         logMessage("Ricevuto: " + event.data);
         if (event.data.includes(".gcode")) {
+          refreshFileList();
           addFileToList(event.data.trim());
         }
       };
@@ -133,11 +148,21 @@
       logContainer.scrollTop = logContainer.scrollHeight;
     }
 
+    // Svuota la lista dei file
+    function refreshFileList() {
+      const fileList = document.getElementById("file-list");
+      fileList.innerHTML = "";
+    }
+
     // Aggiungi file alla lista
     function addFileToList(fileName) {
       const fileList = document.getElementById("file-list");
       const listItem = document.createElement("li");
-      listItem.innerHTML = `<a href="#" onclick="selectAndPrint('${fileName}')">[S]</a> ${fileName}`;
+      listItem.innerHTML = `
+        <span class="icon" onclick="selectAndPrint('${fileName}')">🖨️</span>
+        ${fileName}
+        <span class="icon" onclick="deleteFile('${fileName}')">🗑️</span>
+      `;
       fileList.appendChild(listItem);
     }
 
@@ -147,6 +172,16 @@
         websocket.send(`M23 ${fileName}\r\n`);
         websocket.send("M24\r\n");
         logMessage(`Comando inviato: Stampa ${fileName}`);
+      } else {
+        logMessage("WebSocket non connesso. Impossibile inviare il comando.");
+      }
+    }
+
+    // Elimina un file
+    function deleteFile(fileName) {
+      if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(`M30 ${fileName}\r\n`);
+        logMessage(`Comando inviato: Elimina ${fileName}`);
       } else {
         logMessage("WebSocket non connesso. Impossibile inviare il comando.");
       }
