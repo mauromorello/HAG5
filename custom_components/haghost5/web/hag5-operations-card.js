@@ -8,7 +8,8 @@ class Hag5OperationsCard extends HTMLElement {
     }
 
     set hass(hass) {
-
+        
+        console.log("HASS CONFIG:", hass.config);
         console.log("hass connection data:", hass.connection);
         console.log("hass states:", hass.states);
         console.log("hass domain data:", hass.states['sensor.printer_ip_address']);
