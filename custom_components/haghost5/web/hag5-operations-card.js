@@ -9,13 +9,11 @@ class Hag5OperationsCard extends HTMLElement {
 
     set hass(hass) {
         
-        console.log("HASS CONFIG:", hass.config);
-        console.log("hass connection data:", hass.connection);
-        console.log("hass states:", hass.states);
-        console.log("hass domain data:", hass.states['sensor.printer_ip_address']);
-        
-        // Recupera l'IP della stampante dall'integrazione configurata
-        const ipAddress = hass.states['sensor.printer_ip_address']?.state || 'unknown';
+        // Recupera l'IP della stampante dall'entità dedicata
+        const entity = hass.states['sensor.haghost5_printer_ip'];
+        const ipAddress = entity?.state || 'unknown';
+    
+        console.log("IP Address from sensor:", ipAddress);
 
 
 
