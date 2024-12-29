@@ -47,15 +47,22 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if 'entities' not in hass.data[DOMAIN]:
         hass.data[DOMAIN]['entities'] = []
 
-    # Salva l'IP della stampante
-    hass.data[DOMAIN]['ip_address'] = ip_address
+    # Salva l'IP in un'entità dedicata
+    hass.states.async_set(
+        "sensor.haghost5_printer_ip",
+        ip_address,
+        {
+            "friendly_name": "HAGhost5 Printer IP Address",
+            "icon": "mdi:ip-network"
+        }
+    )
     
     # 1) Registra il dispositivo esplicitamente
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
         identifiers={(DOMAIN, ip_address)},
-        name=f"Printer ({ip_address})",
+        name=f"Ghost5@{ip_address}",
         manufacturer="HAGhost5",
         model="3D Printer",
         sw_version="1.0"
