@@ -74,18 +74,18 @@
 <body>
   <div class="ha-card">
     <!-- Form per Upload Semplice -->
-    <form method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data">
+    <form id="upload-form" method="POST" action="/api/haghost5/upload_gcode" enctype="multipart/form-data" onsubmit="handleUpload(event, 'upload-btn')">
       <label>File GCODE (solo upload)</label>
-      <input type="file" name="file" accept=".gcode" onchange="toggleButtonState(this, 'upload-btn')">
+      <input id="upload-input" type="file" name="file" accept=".gcode" onchange="toggleButtonState(this, 'upload-btn')">
       <button id="upload-btn" type="submit" disabled>Upload</button>
     </form>
 
     <hr />
 
     <!-- Form per Upload + Print -->
-    <form method="POST" action="/api/haghost5/upload_and_print" enctype="multipart/form-data">
+    <form id="print-form" method="POST" action="/api/haghost5/upload_and_print" enctype="multipart/form-data" onsubmit="handleUpload(event, 'print-btn')">
       <label>File GCODE (upload + stampa)</label>
-      <input type="file" name="file" accept=".gcode" onchange="toggleButtonState(this, 'print-btn')">
+      <input id="print-input" type="file" name="file" accept=".gcode" onchange="toggleButtonState(this, 'print-btn')">
       <button id="print-btn" type="submit" disabled>Upload & Print</button>
     </form>
 
@@ -146,6 +146,47 @@
         commandInput.value = ""; // Pulisce l'input
       } else {
         logMessage("WebSocket non connesso. Impossibile inviare il comando.");
+      }
+    }
+
+    // Gestisci stato del pulsante
+    function toggleButtonState(input, buttonId) {
+      const button = document.getElementById(buttonId);
+      if (input.files.length > 0) {
+        button.disabled = false;
+        button.classList.add('enabled');
+      } else {
+        button.disabled = true;
+        button.classList.remove('enabled');
+      }
+    }
+
+    // Gestione del caricamento senza ricaricare la pagina
+    async function handleUpload(event, buttonId) {
+      event.preventDefault(); // Previene il comportamento di default (reload)
+      const form = event.target;
+      const formData = new FormData(form);
+      const button = document.getElementById(buttonId);
+      const input = form.querySelector('input[type="file"]');
+
+      button.disabled = true; // Disabilita il pulsante durante l'upload
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          logMessage(`Upload completato: ${input.files[0].name}`);
+          input.value = ''; // Resetta il campo file
+        } else {
+          logMessage(`Errore nell'upload: ${response.statusText}`);
+        }
+      } catch (error) {
+        logMessage(`Errore durante l'upload: ${error.message}`);
+      } finally {
+        button.disabled = true; // Ripristina il pulsante
+        button.classList.remove('enabled');
       }
     }
 
