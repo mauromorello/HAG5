@@ -5,7 +5,7 @@
   "documentation": "https://github.com/mauromorello/HAGhost5",
   "requirements": [],
   "dependencies": [],
-  "codeowners": ["@tuo-username"],
+  "codeowners": ["@mauromorello"],
   "iot_class": "local_polling",
   "config_flow": true,
   "homeassistant": "2024.1.0",    
